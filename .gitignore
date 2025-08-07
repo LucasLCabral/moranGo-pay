@@ -27,6 +27,17 @@ go.work.sum
 # env file
 .env
 
+# Go
+/bin/
+/vendor/
+*.test
+*.out
+
+# Terraform
+.terraform/
+terraform.tfstate*
+
+
 # Editor/IDE
 # .idea/
 # .vscode/
