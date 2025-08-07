@@ -1,5 +1,5 @@
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "hello-http-api"
+  name          = "dev-morango-api"
   protocol_type = "HTTP"
 }
 
