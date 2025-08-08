@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/LucasLCabral/moranGo-pay/app/internal/usecase"
+	"github.com/LucasLCabral/moranGo-pay/internal/usecase"
 
 	"github.com/aws/aws-lambda-go/events"
 )
@@ -93,7 +93,7 @@ func (handler *AuthHandler) Register(ctx context.Context, request events.APIGate
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, nil
 	}
-	
+
 	var registerReq struct {
 		Email    string `json:"email,omitempty"`
 		Password string `json:"password,omitempty"`
@@ -110,7 +110,7 @@ func (handler *AuthHandler) Register(ctx context.Context, request events.APIGate
 
 	user := usecase.User{
 		Email: registerReq.Email,
-		Name: registerReq.Name,
+		Name:  registerReq.Name,
 	}
 
 	err := handler.authUseCase.Register(ctx, user, registerReq.Password)
