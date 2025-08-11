@@ -3,32 +3,11 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
+
+	"github.com/LucasLCabral/moranGo-pay/internal/domain"
 )
-
-// Dependencies Inversion Principle
-// High-level modules should not depend on low-level modules. Both should depend on abstractions.
-// Abstractions should not depend on details. Details should depend on abstractions.
-
-// UserRepository is an abstraction that defines the methods for interacting with the user data store
-type UserRepository interface {
-	CreateUser(ctx context.Context, user User) error
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
-}
-
-// TokenService is an abstraction that defines the methods for generating and validating tokens
-type TokenService interface {
-	GenerateToken(userID string) (string, error)
-	ValidateToken(token string) (bool, error)
-}
-
-type User struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
 
 type LoginCredentials struct {
 	Email    string `json:"email"`
@@ -36,18 +15,18 @@ type LoginCredentials struct {
 }
 
 type LoginResult struct {
-	User         User   `json:"user"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
+	User         domain.User `json:"user"`
+	AccessToken  string      `json:"access_token"`
+	RefreshToken string      `json:"refresh_token"`
+	TokenType    string      `json:"token_type"`
 }
 
 type AuthUseCase struct {
-	userRepo     UserRepository
-	tokenService TokenService
+	userRepo     domain.UserRepository
+	tokenService domain.TokenService
 }
 
-func NewAuthUseCase(userRepo UserRepository, tokenService TokenService) *AuthUseCase {
+func NewAuthUseCase(userRepo domain.UserRepository, tokenService domain.TokenService) *AuthUseCase {
 	return &AuthUseCase{
 		userRepo:     userRepo,
 		tokenService: tokenService,
@@ -82,21 +61,26 @@ func (u *AuthUseCase) Login(ctx context.Context, credentials LoginCredentials) (
 	}, nil
 }
 
-func (u *AuthUseCase) Register(ctx context.Context, user User, password string) error {
+func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password string) error {
 	if err := u.validateUserData(user, password); err != nil {
 		return err
 	}
 
 	// Check if user already exists
-	existingUser, _ := u.userRepo.GetUserByEmail(ctx, user.Email)
+	existingUser, err := u.userRepo.GetUserByEmail(ctx, user.Email)
+	if err != nil {
+		log.Printf("🔍 DEBUG: Erro ao buscar usuário existente: %v", err)
+		return err
+	}
+
 	if existingUser != nil {
 		return errors.New("user already exists")
 	}
 
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
+	user.CreatedAt = time.Now().Format("2006-01-02") // do you believe that this format is my birth date?
+	user.UpdatedAt = time.Now().Format("2006-01-02") // yk, that's crazy, but it's the only way to get the date in the correct format
 
-	if err := u.userRepo.CreateUser(ctx, user); err != nil {
+	if err := u.userRepo.CreateUser(ctx, user, password); err != nil {
 		return errors.New("failed to create user")
 	}
 
@@ -111,7 +95,7 @@ func (u *AuthUseCase) validateLoginCredentials(credentials LoginCredentials) err
 	return nil
 }
 
-func (u *AuthUseCase) validateUserData(user User, password string) error {
+func (u *AuthUseCase) validateUserData(user domain.User, password string) error {
 	if user.Email == "" || user.Name == "" {
 		return errors.New("email and name are required")
 	}
@@ -123,6 +107,7 @@ func (u *AuthUseCase) validateUserData(user User, password string) error {
 	return nil
 }
 
-func (u *AuthUseCase) validadePassword(password string, user *User) bool {
+func (u *AuthUseCase) validadePassword(password string, user *domain.User) bool {
+	// TODO: implement password validation
 	return true
 }

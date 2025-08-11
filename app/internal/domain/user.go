@@ -1,0 +1,29 @@
+package domain
+
+import (
+	"context"
+)
+
+// Dependencies Inversion Principle
+// High-level modules should not depend on low-level modules. Both should depend on abstractions.
+// Abstractions should not depend on details. Details should depend on abstractions.
+
+// UserRepository is an abstraction that defines the methods for interacting with the user data store
+type UserRepository interface {
+	CreateUser(ctx context.Context, user User, password string) error
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
+}
+
+// TokenService is an abstraction that defines the methods for generating and validating tokens
+type TokenService interface {
+	GenerateToken(userID string) (string, error)
+	ValidateToken(token string) (bool, error)
+}
+
+type User struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
