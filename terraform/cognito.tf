@@ -28,10 +28,8 @@ resource "aws_cognito_user_pool_client" "app_client" {
   name         = "morangopay-client"
   user_pool_id = aws_cognito_user_pool.users.id
 
-  # não gera secret (útil para clients públicos / testes)
   generate_secret = false
 
-  # flows necessários para login via USER_PASSWORD_AUTH e refresh token
   explicit_auth_flows = [
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
@@ -42,12 +40,4 @@ resource "aws_cognito_user_pool_client" "app_client" {
   access_token_validity  = 1
   id_token_validity      = 1
   refresh_token_validity = 30
-}
-
-output "cognito_user_pool_id" {
-  value = aws_cognito_user_pool.users.id
-}
-
-output "cognito_app_client_id" {
-  value = aws_cognito_user_pool_client.app_client.id
 }
