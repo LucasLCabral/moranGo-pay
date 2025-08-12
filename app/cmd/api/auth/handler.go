@@ -37,7 +37,7 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 	if request.Body == "" {
 		return events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "{error: Request body is empty}",
+			Body:       `{"error": "Request body is empty"}`,
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, nil
 	}
@@ -47,7 +47,7 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 	if err := json.Unmarshal([]byte(request.Body), &loginRequest); err != nil {
 		return events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "{error: Invalid request body}",
+			Body:       `{"error": "Invalid request body"}`,
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, nil
 	}
@@ -81,10 +81,10 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 	}
 
 	return events.APIGatewayV2HTTPResponse{
-        StatusCode: http.StatusOK,
-        Body:       string(responseBody),
-        Headers:    map[string]string{"Content-Type": "application/json"},
-    }, nil
+		StatusCode: http.StatusOK,
+		Body:       string(responseBody),
+		Headers:    map[string]string{"Content-Type": "application/json"},
+	}, nil
 }
 
 func (handler *AuthHandler) Register(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
@@ -109,28 +109,28 @@ func (handler *AuthHandler) Register(ctx context.Context, request events.APIGate
 			Body:       "{error: Invalid request body}",
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, nil
-	}	
+	}
 
 	log.Printf("🔍 DEBUG: Chamando UseCase.Register...")
-    err := handler.authUseCase.Register(ctx, domain.User{
+	err := handler.authUseCase.Register(ctx, domain.User{
 		Email: registerReq.Email,
 		Name:  registerReq.Name,
 	}, registerReq.Password)
-    log.Printf("🔍 DEBUG: UseCase.Register retornou: err=%v", err)
-    
-    if err != nil {
-        log.Printf("❌ DEBUG: Erro retornado: %v", err)
-        return events.APIGatewayV2HTTPResponse{
-            StatusCode: http.StatusInternalServerError,
-            Body:       `{"error": "` + err.Error() + `"}`,
-            Headers:    map[string]string{"Content-Type": "application/json"},
-        }, nil
-    }
-    
-    log.Printf("✅ DEBUG: Sucesso, retornando OK")
-    return events.APIGatewayV2HTTPResponse{
-        StatusCode: http.StatusOK,
-        Body:       `{"message": "User registered successfully"}`,
-        Headers:    map[string]string{"Content-Type": "application/json"},
-    }, nil
-}	
+	log.Printf("🔍 DEBUG: UseCase.Register retornou: err=%v", err)
+
+	if err != nil {
+		log.Printf("❌ DEBUG: Erro retornado: %v", err)
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       `{"error": "` + err.Error() + `"}`,
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, nil
+	}
+
+	log.Printf("✅ DEBUG: Sucesso, retornando OK")
+	return events.APIGatewayV2HTTPResponse{
+		StatusCode: http.StatusOK,
+		Body:       `{"message": "User registered successfully"}`,
+		Headers:    map[string]string{"Content-Type": "application/json"},
+	}, nil
+}
