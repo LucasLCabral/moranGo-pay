@@ -33,6 +33,13 @@ resource "aws_apigatewayv2_route" "auth_register_route" {
   target = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"  
 }
 
+resource "aws_apigatewayv2_route" "auth_confirm_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /auth/confirm"
+
+  target = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"  
+}
+
 # TODO: Implement logout route
 # resource "aws_apigatewayv2_route" "auth_logout_route" {
 #   api_id    = aws_apigatewayv2_api.http_api.id

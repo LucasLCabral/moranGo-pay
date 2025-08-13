@@ -56,6 +56,7 @@ resource "aws_iam_role_policy" "lambda_cognito" {
           "cognito-idp:InitiateAuth",
           "cognito-idp:SignUp",
           "cognito-idp:ConfirmSignUp",
+          "cognito-idp:AdminConfirmSignUp",
           "cognito-idp:GetUser",
           "cognito-idp:AdminGetUser",
           "cognito-idp:ListUsers"
