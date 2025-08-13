@@ -3,23 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
 )
-
-type LoginCredentials struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type LoginResult struct {
-	User         domain.User `json:"user"`
-	AccessToken  string      `json:"access_token"`
-	RefreshToken string      `json:"refresh_token"`
-	TokenType    string      `json:"token_type"`
-}
 
 type AuthUseCase struct {
 	userRepo     domain.UserRepository
@@ -33,43 +20,13 @@ func NewAuthUseCase(userRepo domain.UserRepository, tokenService domain.TokenSer
 	}
 }
 
-// Login implements the Login method of the AuthUseCase interface
-func (u *AuthUseCase) Login(ctx context.Context, credentials LoginCredentials) (*LoginResult, error) {
-	if err := u.validateLoginCredentials(credentials); err != nil {
-		return nil, err
-	}
-
-	user, err := u.userRepo.GetUserByEmail(ctx, credentials.Email)
-	if err != nil {
-		return nil, errors.New("invalid credentials")
-	}
-
-	if !u.validadePassword(credentials.Password, user) {
-		return nil, errors.New("invalid credentials")
-	}
-
-	accessToken, err := u.tokenService.GenerateToken(user.ID)
-	if err != nil {
-		return nil, errors.New("failed to generate access token")
-	}
-
-	return &LoginResult{
-		User:         *user,
-		AccessToken:  accessToken,
-		RefreshToken: "refresh_token_placeholder",
-		TokenType:    "Bearer",
-	}, nil
-}
-
 func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password string) error {
 	if err := u.validateUserData(user, password); err != nil {
 		return err
 	}
 
-	// Check if user already exists
 	existingUser, err := u.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		log.Printf("🔍 DEBUG: Erro ao buscar usuário existente: %v", err)
 		return err
 	}
 
@@ -87,7 +44,31 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 	return nil
 }
 
-func (u *AuthUseCase) validateLoginCredentials(credentials LoginCredentials) error {
+func (u *AuthUseCase) ConfirmUser(ctx context.Context, in domain.ConfirmUserInput) error {
+	if in.Username == "" && in.Email == "" {
+		return errors.New("username or email is required")
+	}
+
+	username := in.Username
+	if username == "" {
+		user, err := u.userRepo.GetUserByEmail(ctx, in.Email)
+		if err != nil {
+			return err
+		}
+		if user == nil || user.ID == "" {
+			return errors.New("user not found")
+		}
+		username = user.ID
+	}
+
+	return u.userRepo.AdminConfirmUser(ctx, username)
+}
+
+func (u *AuthUseCase) Login(ctx context.Context, credentials domain.LoginCredentials) (*domain.LoginResult, error) {
+	return u.validateCredentials(ctx, credentials)
+}
+
+func (u *AuthUseCase) validateLoginCredentials(credentials domain.LoginCredentials) error {
 	if credentials.Email == "" || credentials.Password == "" {
 		return errors.New("email and password are required")
 	}
@@ -107,7 +88,29 @@ func (u *AuthUseCase) validateUserData(user domain.User, password string) error 
 	return nil
 }
 
-func (u *AuthUseCase) validadePassword(password string, user *domain.User) bool {
-	// TODO: implement password validation
-	return true
+func (u *AuthUseCase) validateCredentials(ctx context.Context, credentials domain.LoginCredentials) (*domain.LoginResult, error) {
+	if err := u.validateLoginCredentials(credentials); err != nil {
+		return nil, err
+	}
+
+	if _, err := u.userRepo.ValidateCredentials(ctx, credentials.Email, credentials.Password); err != nil {
+		return nil, errors.New("invalid credentials")
+	}
+
+	user, err := u.userRepo.GetUserByEmail(ctx, credentials.Email)
+	if err != nil || user == nil {
+		return nil, errors.New("user not found after authentication")
+	}
+
+	accessToken, err := u.tokenService.GenerateToken(user.ID)
+	if err != nil {
+		return nil, errors.New("failed to generate access token")
+	}
+
+	return &domain.LoginResult{
+		User:         *user,
+		AccessToken:  accessToken,
+		RefreshToken: "refresh_token_placeholder",
+		TokenType:    "Bearer",
+	}, nil
 }

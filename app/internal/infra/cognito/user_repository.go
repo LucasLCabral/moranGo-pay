@@ -20,10 +20,9 @@ type CognitoUserRepository struct {
 func NewCognitoUserRepository(userPoolID, appClientID string) (domain.UserRepository, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+		return nil, fmt.Errorf("error: failed to load AWS config: %w", err)
 	}
 
-	// Criar cliente Cognito
 	cognitoClient := cognitoidentityprovider.NewFromConfig(cfg)
 
 	return &CognitoUserRepository{
@@ -50,7 +49,7 @@ func (r *CognitoUserRepository) CreateUser(ctx context.Context, user domain.User
 
 	_, err := r.cognitoClient.SignUp(ctx, signUpInput)
 	if err != nil {
-		return fmt.Errorf("failed to sign up user: %w", err)
+		return fmt.Errorf("error: failed to sign up user: %w", err)
 	}
 
 	return nil
@@ -65,7 +64,7 @@ func (r *CognitoUserRepository) GetUserByEmail(ctx context.Context, email string
 
 	result, err := r.cognitoClient.ListUsers(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %w", err)
+		return nil, fmt.Errorf("error: failed to list users: %w", err)
 	}
 
 	if len(result.Users) == 0 {
@@ -90,4 +89,35 @@ func (r *CognitoUserRepository) GetUserByEmail(ctx context.Context, email string
 		CreatedAt: u.UserCreateDate.Format("2006-01-02"),
 		UpdatedAt: u.UserLastModifiedDate.Format("2006-01-02"),
 	}, nil
+}
+
+func (r *CognitoUserRepository) ValidateCredentials(ctx context.Context, email string, password string) (bool, error) {
+	input := &cognitoidentityprovider.InitiateAuthInput{
+		ClientId: aws.String(r.appClientID),
+		AuthFlow: types.AuthFlowTypeUserPasswordAuth,
+		AuthParameters: map[string]string{
+			"USERNAME": email,
+			"PASSWORD": password,
+		},
+	}
+
+	_, err := r.cognitoClient.InitiateAuth(ctx, input)
+	if err != nil {
+		return false, fmt.Errorf("error: failed to initiate auth: %w", err)
+	}
+
+	return true, nil
+}
+
+func (r *CognitoUserRepository) AdminConfirmUser(ctx context.Context, name string) error {
+	input := &cognitoidentityprovider.AdminConfirmSignUpInput{
+		UserPoolId: aws.String(r.userPoolID),
+		Username:   aws.String(name),
+	}
+
+	_, err := r.cognitoClient.AdminConfirmSignUp(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to admin confirm user: %w", err)
+	}
+	return nil
 }

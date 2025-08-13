@@ -12,6 +12,8 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user User, password string) error
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	ValidateCredentials(ctx context.Context, email string, password string) (bool, error)
+	AdminConfirmUser(ctx context.Context, name string) error
 }
 
 // TokenService is an abstraction that defines the methods for generating and validating tokens
