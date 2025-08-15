@@ -8,7 +8,6 @@ import (
 	"github.com/LucasLCabral/moranGo-pay/cmd/api/auth"
 	"github.com/LucasLCabral/moranGo-pay/internal/delivery"
 	"github.com/LucasLCabral/moranGo-pay/internal/infra/cognito"
-	"github.com/LucasLCabral/moranGo-pay/internal/infra/jwt"
 	"github.com/LucasLCabral/moranGo-pay/internal/usecase"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"

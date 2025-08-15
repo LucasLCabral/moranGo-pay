@@ -121,3 +121,24 @@ func (r *CognitoUserRepository) AdminConfirmUser(ctx context.Context, name strin
 	}
 	return nil
 }
+
+func (r *CognitoUserRepository) Authenticate(ctx context.Context, email, password string) (*domain.CognitoTokens, error) {
+	out, err := r.cognitoClient.InitiateAuth(ctx, &cognitoidentityprovider.InitiateAuthInput{
+		ClientId: aws.String(r.appClientID),
+		AuthFlow: types.AuthFlowTypeUserPasswordAuth,
+		AuthParameters: map[string]string{
+			"USERNAME": email,
+			"PASSWORD": password,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error: auth failed: %w", err)
+	}
+	ar := out.AuthenticationResult
+	return &domain.CognitoTokens{
+		AccessToken:  *ar.AccessToken,
+		RefreshToken: *ar.RefreshToken,
+		TokenType:    *ar.TokenType,
+		IDToken:      *ar.IdToken,
+	}, nil
+}

@@ -53,6 +53,7 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 		AccessToken:  loginResult.AccessToken,
 		RefreshToken: loginResult.RefreshToken,
 		TokenType:    loginResult.TokenType,
+		IDToken:      loginResult.IDToken,
 	}
 
 	responseBody, err := json.Marshal(response)

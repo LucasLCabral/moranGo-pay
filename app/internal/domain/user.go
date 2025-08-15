@@ -14,6 +14,7 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	ValidateCredentials(ctx context.Context, email string, password string) (bool, error)
 	AdminConfirmUser(ctx context.Context, name string) error
+	Authenticate(ctx context.Context, email, password string) (*CognitoTokens, error)
 }
 
 // TokenService is an abstraction that defines the methods for generating and validating tokens
@@ -28,4 +29,11 @@ type User struct {
 	Name      string `json:"name"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+}
+
+type CognitoTokens struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	IDToken      string `json:"id_token"`
 }

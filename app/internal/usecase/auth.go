@@ -64,15 +64,24 @@ func (u *AuthUseCase) ConfirmUser(ctx context.Context, in domain.ConfirmUserInpu
 	return u.userRepo.AdminConfirmUser(ctx, username)
 }
 
-func (u *AuthUseCase) Login(ctx context.Context, credentials domain.LoginCredentials) (*domain.LoginResult, error) {
-	return u.validateCredentials(ctx, credentials)
+func (u *AuthUseCase) Login(ctx context.Context, c domain.LoginCredentials) (*domain.LoginResult, error) {
+	if err := u.validateLoginCredentials(c); err != nil { return nil, err }
+
+	tok, err := u.userRepo.Authenticate(ctx, c.Email, c.Password)
+	if err != nil { return nil, errors.New("invalid credentials") }
+
+	return &domain.LoginResult{
+		AccessToken:  tok.AccessToken,
+		RefreshToken: tok.RefreshToken,
+		IDToken:      tok.IDToken,
+		TokenType:    tok.TokenType,
+	}, nil
 }
 
 func (u *AuthUseCase) validateLoginCredentials(credentials domain.LoginCredentials) error {
 	if credentials.Email == "" || credentials.Password == "" {
 		return errors.New("email and password are required")
 	}
-
 	return nil
 }
 
@@ -86,31 +95,4 @@ func (u *AuthUseCase) validateUserData(user domain.User, password string) error 
 	}
 
 	return nil
-}
-
-func (u *AuthUseCase) validateCredentials(ctx context.Context, credentials domain.LoginCredentials) (*domain.LoginResult, error) {
-	if err := u.validateLoginCredentials(credentials); err != nil {
-		return nil, err
-	}
-
-	if _, err := u.userRepo.ValidateCredentials(ctx, credentials.Email, credentials.Password); err != nil {
-		return nil, errors.New("invalid credentials")
-	}
-
-	user, err := u.userRepo.GetUserByEmail(ctx, credentials.Email)
-	if err != nil || user == nil {
-		return nil, errors.New("user not found after authentication")
-	}
-
-	accessToken, err := u.tokenService.GenerateToken(user.ID)
-	if err != nil {
-		return nil, errors.New("failed to generate access token")
-	}
-
-	return &domain.LoginResult{
-		User:         *user,
-		AccessToken:  accessToken,
-		RefreshToken: "refresh_token_placeholder",
-		TokenType:    "Bearer",
-	}, nil
 }
