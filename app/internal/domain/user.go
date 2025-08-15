@@ -17,12 +17,6 @@ type UserRepository interface {
 	Authenticate(ctx context.Context, email, password string) (*CognitoTokens, error)
 }
 
-// TokenService is an abstraction that defines the methods for generating and validating tokens
-type TokenService interface {
-	GenerateToken(userID string) (string, error)
-	ValidateToken(token string) (bool, error)
-}
-
 type User struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`

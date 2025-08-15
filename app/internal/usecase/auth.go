@@ -9,14 +9,12 @@ import (
 )
 
 type AuthUseCase struct {
-	userRepo     domain.UserRepository
-	tokenService domain.TokenService
+	userRepo domain.UserRepository
 }
 
-func NewAuthUseCase(userRepo domain.UserRepository, tokenService domain.TokenService) *AuthUseCase {
+func NewAuthUseCase(userRepo domain.UserRepository) *AuthUseCase {
 	return &AuthUseCase{
-		userRepo:     userRepo,
-		tokenService: tokenService,
+		userRepo: userRepo,
 	}
 }
 
@@ -65,10 +63,14 @@ func (u *AuthUseCase) ConfirmUser(ctx context.Context, in domain.ConfirmUserInpu
 }
 
 func (u *AuthUseCase) Login(ctx context.Context, c domain.LoginCredentials) (*domain.LoginResult, error) {
-	if err := u.validateLoginCredentials(c); err != nil { return nil, err }
+	if err := u.validateLoginCredentials(c); err != nil {
+		return nil, err
+	}
 
 	tok, err := u.userRepo.Authenticate(ctx, c.Email, c.Password)
-	if err != nil { return nil, errors.New("invalid credentials") }
+	if err != nil {
+		return nil, errors.New("invalid credentials")
+	}
 
 	return &domain.LoginResult{
 		AccessToken:  tok.AccessToken,

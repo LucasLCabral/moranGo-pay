@@ -7,8 +7,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/aws/aws-sdk-go-v2/config v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.55.0
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.62.0
-	github.com/golang-jwt/jwt/v5 v5.3.0
 )
 
 require (
