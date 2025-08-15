@@ -43,7 +43,15 @@ func (r *Router) Route(ctx context.Context, request events.APIGatewayV2HTTPReque
     case path == "/auth/confirm" && method == "POST":
         return r.authHandler.ConfirmUser(ctx, request)
     // Wallet Route (protected by JWT)
-    case path == "/wallet" && method == "GET":
+    case path == "/wallet/balance" && method == "GET":
+        return r.handleWallet(ctx, request)
+    case path == "/wallet/deposit" && method == "POST":
+        return r.handleWallet(ctx, request)
+    case path == "/wallet/transactions" && method == "GET":
+        return r.handleWallet(ctx, request)
+    case path == "/wallet/transactions" && method == "POST":
+        return r.handleWallet(ctx, request)
+    case path == "/wallet/transactions" && method == "DELETE":
         return r.handleWallet(ctx, request)
     
     default:

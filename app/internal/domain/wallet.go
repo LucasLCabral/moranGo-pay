@@ -6,7 +6,7 @@ type WalletRepository interface {
 	CreateWallet(ctx context.Context, wallet Wallet) error
 	GetWalletByUserID(ctx context.Context, userID string) (*Wallet, error)
 	UpdateWallet(ctx context.Context, wallet Wallet) error
-	DeleteWallet(ctx context.Context, id string) error
+	DeleteWallet(ctx context.Context, wallet Wallet) error
 }
 
 type Wallet struct {
