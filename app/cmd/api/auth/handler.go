@@ -135,7 +135,7 @@ func (handler *AuthHandler) ConfirmUser(ctx context.Context, request events.APIG
 	err := handler.authUseCase.ConfirmUser(ctx, confirmUserInput)
 	if err != nil {
 		return events.APIGatewayV2HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusBadRequest,
 			Body:       `{"error": "` + err.Error() + `"}`,
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, nil
