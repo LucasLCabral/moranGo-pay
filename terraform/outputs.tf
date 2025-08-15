@@ -17,3 +17,13 @@ output "lambda_function_name" {
 output "jwt_secret_parameter_name" {
   value = aws_ssm_parameter.jwt_secret.name
 }
+
+output "dynamodb_table_name" {
+  description = "Name of the DynamoDB table"
+  value       = aws_dynamodb_table.morango_pay_data.name
+}
+
+output "dynamodb_table_arn" {
+  description = "ARN of the DynamoDB table"
+  value       = aws_dynamodb_table.morango_pay_data.arn
+}

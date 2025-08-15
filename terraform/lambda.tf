@@ -87,6 +87,33 @@ resource "aws_iam_role_policy" "lambda_ssm" {
   })
 }
 
+# Política para acessar DynamoDB
+resource "aws_iam_role_policy" "lambda_dynamodb" {
+  name = "lambda-dynamodb-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = [
+          aws_dynamodb_table.morango_pay_data.arn,
+          "${aws_dynamodb_table.morango_pay_data.arn}/index/*"
+        ]
+      }
+    ]
+  })
+}
+
 # Lambda Function
 resource "aws_lambda_function" "api" {
   filename         = "${path.module}/../app/lambda.zip"
@@ -104,6 +131,7 @@ resource "aws_lambda_function" "api" {
       COGNITO_USER_POOL_ID = aws_cognito_user_pool.users.id
       COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.app_client.id
       JWT_SECRET_KEY       = aws_ssm_parameter.jwt_secret.name
+      DYNAMODB_TABLE_NAME  = aws_dynamodb_table.morango_pay_data.name
     }
   }
 }
