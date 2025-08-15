@@ -12,7 +12,6 @@ type TransactionRepository interface {
 type TransactionType string
 
 const (
-	TransactionTypeUnknown    TransactionType = "unknown"
 	TransactionTypeCredit     TransactionType = "credit"
 	TransactionTypeDebit      TransactionType = "debit"
 	TransactionTypeTransfer   TransactionType = "transfer"
@@ -28,5 +27,7 @@ type Transaction struct {
 	WalletID        string          `json:"wallet_id"`
 	Amount          float64         `json:"amount"`
 	TransactionType TransactionType `json:"transaction_type"`
+	Description     string          `json:"description,omitempty"`
+	ReferenceID     string          `json:"reference_id,omitempty"`
 	CreatedAt       string          `json:"created_at"`
 }

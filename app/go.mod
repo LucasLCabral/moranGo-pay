@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/aws/aws-sdk-go-v2/config v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.55.0
+	github.com/google/uuid v1.6.0
 )
 
 require (
