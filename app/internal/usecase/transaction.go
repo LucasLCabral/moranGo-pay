@@ -26,7 +26,7 @@ func (u *TransactionUseCase) CreateTransaction(ctx context.Context, transaction 
 		return errors.New("amount must be positive")
 	}
 
-	if transaction.TransactionType == domain.TransactionType("") {
+	if transaction.TransactionType == "" {
 		return errors.New("transaction type is required")
 	}
 

@@ -10,10 +10,9 @@ type WalletRepository interface {
 }
 
 type Wallet struct {
-	WalletID        string `json:"wallet_id"`
-	UserID    string `json:"user_id"`
+	WalletID  string  `json:"wallet_id"`
+	UserID    string  `json:"user_id"`
 	Balance   float64 `json:"balance"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt string  `json:"updated_at"`
 }
-
