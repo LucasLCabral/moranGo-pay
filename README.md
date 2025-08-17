@@ -1,2 +1,2 @@
-<img src="morango-pay-image.png" alt="Morango Pay Banner" width="80%" />
+<img src="morango-pay-img.png" alt="Morango Pay Banner" width="100%" />
 
