@@ -1,2 +1,2 @@
-![Morango Pay Banner](morango-pay-image.png)
+<img src="morango-pay-image.png" alt="Morango Pay Banner" width="80%" />
 
