@@ -42,3 +42,7 @@ terraform.tfstate*
 
 # MacOs
 .DS_STORE
+
+# Lambda
+lambda.zip
+bootstrap
