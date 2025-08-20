@@ -7,17 +7,20 @@ import (
 	"time"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
+	"github.com/google/uuid"
 )
 
 type AuthUseCase struct {
 	userRepo    domain.UserRepository
 	profileRepo domain.ProfileRepository
+	walletRepo  domain.WalletRepository
 }
 
-func NewAuthUseCase(userRepo domain.UserRepository, profileRepo domain.ProfileRepository) *AuthUseCase {
+func NewAuthUseCase(userRepo domain.UserRepository, profileRepo domain.ProfileRepository, walletRepo domain.WalletRepository) *AuthUseCase {
 	return &AuthUseCase{
 		userRepo:    userRepo,
 		profileRepo: profileRepo,
+		walletRepo:  walletRepo,
 	}
 }
 
@@ -39,28 +42,52 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 		return errors.New("username already taken")
 	}
 
-	
+	userID := uuid.New().String()
 	user.CreatedAt = time.Now().Format("2006-01-02") // do you believe that this format is my birth date? :)
-    user.UpdatedAt = time.Now().Format("2006-01-02") // yk, that's crazy, but it's the only way to get the date in the correct format 
+	user.UpdatedAt = time.Now().Format("2006-01-02") // yk, that's crazy, but it's the only way to get the date in the correct format
 
 	if err := u.userRepo.CreateUser(ctx, user, password); err != nil {
 		return errors.New("failed to create user")
 	}
 
-	
-	profile := domain.UserProfile{
-		PK:        fmt.Sprintf("USER#%s", user.Email),
-		SK:        "PROFILE",
-		UserID:    user.Email, // ID do Cognito (email)
+	user = domain.User{
+		ID:        userID,
 		Email:     user.Email,
 		Name:      user.Name,
 		Username:  user.Username,
-		CreatedAt: time.Now().Format(time.RFC3339),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	profile := domain.UserProfile{
+		PK:        fmt.Sprintf("USER#%s", userID),
+		SK:        "PROFILE",
+		GSI1PK:    fmt.Sprintf("EMAIL#%s", user.Email),
+		GSI1SK:    fmt.Sprintf("USER#%s", userID),
+		UserID:    userID,
+		Email:     user.Email,
+		Name:      user.Name,
+		Username:  user.Username,
+		CreatedAt: user.CreatedAt,
 	}
 
 	if err := u.profileRepo.CreateProfile(ctx, profile); err != nil {
 		// TODO: Implementar rollback do Cognito em caso de falha
 		return errors.New("failed to create user profile")
+	}
+
+	// Removido usernameIndex redundante - username já está no perfil principal
+
+	wallet := domain.Wallet{
+		WalletID:  uuid.New().String(),
+		UserID:    userID,
+		Balance:   0.0,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	if err := u.walletRepo.CreateWallet(ctx, wallet); err != nil {
+		return errors.New("failed to create wallet")
 	}
 
 	return nil
@@ -96,7 +123,18 @@ func (u *AuthUseCase) Login(ctx context.Context, c domain.LoginCredentials) (*do
 		return nil, errors.New("invalid credentials")
 	}
 
+	userProfile, err := u.profileRepo.GetUserByEmail(ctx, c.Email)
+	if err != nil || userProfile == nil {
+		return nil, errors.New("user profile not found")
+	}
+
 	return &domain.LoginResult{
+		User: domain.User{
+			ID:       userProfile.UserID,
+			Email:    userProfile.Email,
+			Name:     userProfile.Name,
+			Username: userProfile.Username,
+		},
 		AccessToken:  tok.AccessToken,
 		RefreshToken: tok.RefreshToken,
 		IDToken:      tok.IDToken,

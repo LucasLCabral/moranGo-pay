@@ -35,7 +35,12 @@ func init() {
 		log.Fatal("Error creating DynamoDB repository:", err)
 	}
 
-	authUseCase := usecase.NewAuthUseCase(userRepo, profileRepo)
+	walletRepo, err := dynamodb.NewDynamoWalletRepository(tableName)
+	if err != nil {
+		log.Fatal("Error creating DynamoDB repository:", err)
+	}
+
+	authUseCase := usecase.NewAuthUseCase(userRepo, profileRepo, walletRepo)
 	authHandler := auth.NewAuthHandler(authUseCase)
 
 	router = delivery.NewRouter(authHandler)

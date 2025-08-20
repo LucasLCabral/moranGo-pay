@@ -97,8 +97,8 @@ func (handler *AuthHandler) Register(ctx context.Context, request events.APIGate
 	}
 
 	err := handler.authUseCase.Register(ctx, domain.User{
-		Email: registerReq.Email,
-		Name:  registerReq.Name,
+		Email:    registerReq.Email,
+		Name:     registerReq.Name,
 		Username: registerReq.Username,
 	}, registerReq.Password)
 

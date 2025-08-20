@@ -48,8 +48,8 @@ func (r *DynamoProfileRepository) CreateProfile(ctx context.Context, profile dom
 	item := profileItem{
 		PK:        profile.PK,
 		SK:        profile.SK,
-		GSI1PK:    fmt.Sprintf("USERNAME#%s", profile.Username),
-		GSI1SK:    fmt.Sprintf("USER#%s", profile.UserID),
+		GSI1PK:    profile.GSI1PK,
+		GSI1SK:    profile.GSI1SK,
 		UserID:    profile.UserID,
 		Email:     profile.Email,
 		Name:      profile.Name,
@@ -88,7 +88,7 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 	}
 
 	if result.Item == nil {
-		return nil, nil 
+		return nil, nil
 	}
 
 	var item profileItem
@@ -100,6 +100,8 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 	return &domain.UserProfile{
 		PK:        item.PK,
 		SK:        item.SK,
+		GSI1PK:    item.GSI1PK,
+		GSI1SK:    item.GSI1SK,
 		UserID:    item.UserID,
 		Email:     item.Email,
 		Name:      item.Name,
@@ -109,22 +111,22 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 }
 
 func (r *DynamoProfileRepository) GetProfileByUsername(ctx context.Context, username string) (*domain.UserProfile, error) {
-	result, err := r.client.Query(ctx, &dynamodb.QueryInput{
-		TableName:              aws.String(r.tableName),
-		IndexName:              aws.String("GSI1"),
-		KeyConditionExpression: aws.String("GSI1PK = :username"),
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(r.tableName),
+		FilterExpression: aws.String("username = :username AND SK = :sk"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":username": &types.AttributeValueMemberS{Value: fmt.Sprintf("USERNAME#%s", username)},
+			":username": &types.AttributeValueMemberS{Value: username},
+			":sk":       &types.AttributeValueMemberS{Value: "PROFILE"},
 		},
 		Limit: aws.Int32(1),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to query profile by username: %w", err)
+		return nil, fmt.Errorf("failed to scan profile by username: %w", err)
 	}
 
 	if len(result.Items) == 0 {
-		return nil, nil 
+		return nil, nil
 	}
 
 	var item profileItem
@@ -136,6 +138,46 @@ func (r *DynamoProfileRepository) GetProfileByUsername(ctx context.Context, user
 	return &domain.UserProfile{
 		PK:        item.PK,
 		SK:        item.SK,
+		GSI1PK:    item.GSI1PK,
+		GSI1SK:    item.GSI1SK,
+		UserID:    item.UserID,
+		Email:     item.Email,
+		Name:      item.Name,
+		Username:  item.Username,
+		CreatedAt: item.CreatedAt,
+	}, nil
+}
+
+func (r *DynamoProfileRepository) GetUserByEmail(ctx context.Context, email string) (*domain.UserProfile, error) {
+	result, err := r.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(r.tableName),
+		IndexName:              aws.String("GSI1"),
+		KeyConditionExpression: aws.String("GSI1PK = :email"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":email": &types.AttributeValueMemberS{Value: fmt.Sprintf("EMAIL#%s", email)},
+		},
+		Limit: aws.Int32(1),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to query profile by email: %w", err)
+	}
+
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+
+	var item profileItem
+	err = attributevalue.UnmarshalMap(result.Items[0], &item)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal profile: %w", err)
+	}
+
+	return &domain.UserProfile{
+		PK:        item.PK,
+		SK:        item.SK,
+		GSI1PK:    item.GSI1PK,
+		GSI1SK:    item.GSI1SK,
 		UserID:    item.UserID,
 		Email:     item.Email,
 		Name:      item.Name,
