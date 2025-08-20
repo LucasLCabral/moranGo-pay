@@ -7,10 +7,6 @@ variable "region" {
 resource "aws_cognito_user_pool" "users" {
   name = "morangopay-userpool"
 
-  # verifica e-mail automaticamente
-  auto_verified_attributes = ["email"]
-  username_attributes      = ["email"]
-
   password_policy {
     minimum_length    = 8
     require_lowercase = true

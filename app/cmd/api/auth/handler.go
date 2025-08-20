@@ -85,6 +85,7 @@ func (handler *AuthHandler) Register(ctx context.Context, request events.APIGate
 		Email    string `json:"email,omitempty"`
 		Password string `json:"password,omitempty"`
 		Name     string `json:"name,omitempty"`
+		Username string `json:"username,omitempty"`
 	}
 
 	if err := json.Unmarshal([]byte(request.Body), &registerReq); err != nil {
@@ -98,6 +99,7 @@ func (handler *AuthHandler) Register(ctx context.Context, request events.APIGate
 	err := handler.authUseCase.Register(ctx, domain.User{
 		Email: registerReq.Email,
 		Name:  registerReq.Name,
+		Username: registerReq.Username,
 	}, registerReq.Password)
 
 	if err != nil {

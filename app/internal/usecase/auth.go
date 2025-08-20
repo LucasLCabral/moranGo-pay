@@ -3,18 +3,21 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
 )
 
 type AuthUseCase struct {
-	userRepo domain.UserRepository
+	userRepo    domain.UserRepository
+	profileRepo domain.ProfileRepository
 }
 
-func NewAuthUseCase(userRepo domain.UserRepository) *AuthUseCase {
+func NewAuthUseCase(userRepo domain.UserRepository, profileRepo domain.ProfileRepository) *AuthUseCase {
 	return &AuthUseCase{
-		userRepo: userRepo,
+		userRepo:    userRepo,
+		profileRepo: profileRepo,
 	}
 }
 
@@ -27,16 +30,37 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 	if err != nil {
 		return err
 	}
-
 	if existingUser != nil {
 		return errors.New("user already exists")
 	}
 
-	user.CreatedAt = time.Now().Format("2006-01-02") // do you believe that this format is my birth date?
-	user.UpdatedAt = time.Now().Format("2006-01-02") // yk, that's crazy, but it's the only way to get the date in the correct format
+	existingProfile, _ := u.profileRepo.GetProfileByUsername(ctx, user.Username)
+	if existingProfile != nil {
+		return errors.New("username already taken")
+	}
+
+	
+	user.CreatedAt = time.Now().Format("2006-01-02") // do you believe that this format is my birth date? :)
+    user.UpdatedAt = time.Now().Format("2006-01-02") // yk, that's crazy, but it's the only way to get the date in the correct format 
 
 	if err := u.userRepo.CreateUser(ctx, user, password); err != nil {
 		return errors.New("failed to create user")
+	}
+
+	
+	profile := domain.UserProfile{
+		PK:        fmt.Sprintf("USER#%s", user.Email),
+		SK:        "PROFILE",
+		UserID:    user.Email, // ID do Cognito (email)
+		Email:     user.Email,
+		Name:      user.Name,
+		Username:  user.Username,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+
+	if err := u.profileRepo.CreateProfile(ctx, profile); err != nil {
+		// TODO: Implementar rollback do Cognito em caso de falha
+		return errors.New("failed to create user profile")
 	}
 
 	return nil
@@ -88,8 +112,16 @@ func (u *AuthUseCase) validateLoginCredentials(credentials domain.LoginCredentia
 }
 
 func (u *AuthUseCase) validateUserData(user domain.User, password string) error {
-	if user.Email == "" || user.Name == "" {
-		return errors.New("email and name are required")
+	if user.Email == "" || user.Name == "" || user.Username == "" {
+		return errors.New("email, name and username are required")
+	}
+
+	if len(user.Username) < 3 {
+		return errors.New("username must be at least 3 characters long")
+	}
+
+	if len(user.Username) > 20 {
+		return errors.New("username must be at most 20 characters long")
 	}
 
 	if len(password) < 8 {
