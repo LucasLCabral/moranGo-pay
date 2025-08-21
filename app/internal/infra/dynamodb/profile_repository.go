@@ -14,15 +14,15 @@ import (
 )
 
 type profileItem struct {
-	PK        string `dynamodbav:"PK"`
-	SK        string `dynamodbav:"SK"`
-	GSI1PK    string `dynamodbav:"GSI1PK"`
-	GSI1SK    string `dynamodbav:"GSI1SK"`
-	UserID    string `dynamodbav:"user_id"`
-	Email     string `dynamodbav:"email"`
-	Name      string `dynamodbav:"name"`
-	Username  string `dynamodbav:"username"`
-	CreatedAt string `dynamodbav:"created_at"`
+	PK        string `dynamodbav:"PK"` // USER#<user_id>
+	SK        string `dynamodbav:"SK"` // PROFILE
+	GSI1PK    string `dynamodbav:"GSI1PK"` // EMAIL#<email>
+	GSI1SK    string `dynamodbav:"GSI1SK"` // USER#<user_id>
+	UserID    string `dynamodbav:"user_id"` // <user_id>
+	Email     string `dynamodbav:"email"` // <email>
+	Name      string `dynamodbav:"name"` // <name>
+	Username  string `dynamodbav:"username"` // <username>
+	CreatedAt string `dynamodbav:"created_at"` // <created_at>
 }
 
 type DynamoProfileRepository struct {
