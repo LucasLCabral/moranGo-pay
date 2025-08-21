@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/LucasLCabral/moranGo-pay/cmd/api/auth"
+	"github.com/LucasLCabral/moranGo-pay/cmd/api/wallet"
+
 	"github.com/LucasLCabral/moranGo-pay/internal/delivery"
 	"github.com/LucasLCabral/moranGo-pay/internal/infra/cognito"
 	"github.com/LucasLCabral/moranGo-pay/internal/infra/dynamodb"
@@ -40,10 +42,18 @@ func init() {
 		log.Fatal("Error creating DynamoDB repository:", err)
 	}
 
-	authUseCase := usecase.NewAuthUseCase(userRepo, profileRepo, walletRepo)
-	authHandler := auth.NewAuthHandler(authUseCase)
+	transactionRepo, err := dynamodb.NewDynamoTransactionRepository(tableName)
+	if err != nil {
+		log.Fatal("Error creating Transaction repository:", err)
+	}
 
-	router = delivery.NewRouter(authHandler)
+	authUseCase := usecase.NewAuthUseCase(userRepo, profileRepo, walletRepo)
+	walletUseCase := usecase.NewWalletUseCase(walletRepo, transactionRepo)
+
+	authHandler := auth.NewAuthHandler(authUseCase)
+	walletHandler := wallet.NewWalletHandler(walletUseCase)
+
+	router = delivery.NewRouter(authHandler, walletHandler)
 
 	log.Println("System initialized successfully! 🚀 🍓🍓🍓")
 }

@@ -2,71 +2,48 @@ package delivery
 
 import (
 	"context"
-	"net/http"
+	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/LucasLCabral/moranGo-pay/cmd/api/auth"
+	"github.com/LucasLCabral/moranGo-pay/cmd/api/wallet"
+	"github.com/aws/aws-lambda-go/events"
 )
 
 type Router struct {
-	authHandler *auth.AuthHandler
+	authHandler   *auth.AuthHandler
+	walletHandler *wallet.WalletHandler
 }
 
-func NewRouter(authHandler *auth.AuthHandler) *Router {
+func NewRouter(authHandler *auth.AuthHandler, walletHandler *wallet.WalletHandler) *Router {
 	return &Router{
-		authHandler: authHandler,
+		authHandler:   authHandler,
+		walletHandler: walletHandler,
 	}
 }
 
 func (r *Router) Route(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-    path := request.RawPath
-    method := request.RequestContext.HTTP.Method
+	path := request.RawPath
+	method := request.RequestContext.HTTP.Method
 
-    if request.RawPath == "/auth/register" && request.RequestContext.HTTP.Method == "POST" {
-        response, err := r.authHandler.Register(ctx, request)
-        if err != nil {
-            return events.APIGatewayV2HTTPResponse{
-                StatusCode: http.StatusInternalServerError,
-                Body:       `{"error": "Internal server error"}`,
-                Headers:    map[string]string{"Content-Type": "application/json"},
-            }, nil
-        }
-        return response, nil
-    }
+	switch {
+	// Auth Routes
+	case path == "/auth/login" && method == "POST":
+		return r.authHandler.Login(ctx, request)
+	case path == "/auth/register" && method == "POST":
+		return r.authHandler.Register(ctx, request)
+	case path == "/auth/confirm" && method == "POST":
+		return r.authHandler.ConfirmUser(ctx, request)
 
-    switch {
-    // Auth Routes
-    case path == "/auth/login" && method == "POST":
-        return r.authHandler.Login(ctx, request)
-    case path == "/auth/register" && method == "POST":
-        return r.authHandler.Register(ctx, request)
-    case path == "/auth/confirm" && method == "POST":
-        return r.authHandler.ConfirmUser(ctx, request)
-    // Wallet Route (protected by JWT)
-    case path == "/wallet/balance" && method == "GET":
-        return r.handleWallet(ctx, request)
-    case path == "/wallet/deposit" && method == "POST":
-        return r.handleWallet(ctx, request)
-    case path == "/wallet/transactions" && method == "GET":
-        return r.handleWallet(ctx, request)
-    case path == "/wallet/transactions" && method == "POST":
-        return r.handleWallet(ctx, request)
-    case path == "/wallet/transactions" && method == "DELETE":
-        return r.handleWallet(ctx, request)
-    
-    default:
-        return r.handleNotFound()
-    }
+	// Wallet Route (protected by JWT)
+	case strings.HasPrefix(path, "/wallet/") && strings.HasSuffix(path, "/deposit") && method == "POST":
+		return r.walletHandler.Deposit(ctx, request)
+	case strings.HasPrefix(path, "/wallet/") && method == "GET":
+		return r.walletHandler.GetWallet(ctx, request)
 
-}
+	default:
+		return r.handleNotFound()
+	}
 
-func (r *Router) handleWallet(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	// TODO: Implement wallet handler
-	return events.APIGatewayV2HTTPResponse{
-		StatusCode: 501, // Not Implemented
-		Body:       `{"error": "Wallet endpoint not implemented yet"}`,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-	}, nil
 }
 
 func (r *Router) handleNotFound() (events.APIGatewayV2HTTPResponse, error) {
