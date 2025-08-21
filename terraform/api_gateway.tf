@@ -52,12 +52,20 @@ resource "aws_apigatewayv2_route" "auth_confirm_route" {
 # }
 
 # Wallet Route
-resource "aws_apigatewayv2_route" "wallet_route" {
+resource "aws_apigatewayv2_route" "wallet_get_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "GET /wallet"
+  route_key = "GET /wallet/{userID}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
 
-  target = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-
+resource "aws_apigatewayv2_route" "wallet_deposit_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /wallet/{userID}/deposit"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
 }
