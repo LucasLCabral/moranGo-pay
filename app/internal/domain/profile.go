@@ -16,6 +16,7 @@ type ProfileRepository interface {
 type UserProfile struct {
 	PK        string `json:"pk"`
 	SK        string `json:"sk"`
+	Type      string `json:"type"`
 	GSI1PK    string `json:"gsi1pk"`
 	GSI1SK    string `json:"gsi1sk"`
 	GSI2PK    string `json:"gsi2pk"`

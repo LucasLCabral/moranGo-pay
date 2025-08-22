@@ -16,6 +16,7 @@ import (
 type profileItem struct {
 	PK        string `dynamodbav:"PK"`         // USER#<user_id>
 	SK        string `dynamodbav:"SK"`         // PROFILE
+	Type      string `dynamodbav:"type"`       // PROFILE
 	GSI1PK    string `dynamodbav:"GSI1PK"`     // EMAIL#<email>
 	GSI1SK    string `dynamodbav:"GSI1SK"`     // USER#<user_id>
 	GSI2PK    string `dynamodbav:"GSI2PK"`     // USERNAME#<username>
@@ -50,6 +51,7 @@ func (r *DynamoProfileRepository) CreateProfile(ctx context.Context, profile dom
 	item := profileItem{
 		PK:        profile.PK,
 		SK:        profile.SK,
+		Type:      "PROFILE",
 		GSI1PK:    profile.GSI1PK,
 		GSI1SK:    profile.GSI1SK,
 		GSI2PK:    fmt.Sprintf("USERNAME#%s", profile.Username),
@@ -104,6 +106,7 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 	return &domain.UserProfile{
 		PK:        item.PK,
 		SK:        item.SK,
+		Type:      item.Type,
 		GSI1PK:    item.GSI1PK,
 		GSI1SK:    item.GSI1SK,
 		GSI2PK:    item.GSI2PK,
@@ -185,6 +188,7 @@ func (r *DynamoProfileRepository) GetUserByEmail(ctx context.Context, email stri
 	return &domain.UserProfile{
 		PK:        item.PK,
 		SK:        item.SK,
+		Type:      item.Type,
 		GSI1PK:    item.GSI1PK,
 		GSI1SK:    item.GSI1SK,
 		GSI2PK:    item.GSI2PK,
@@ -195,6 +199,33 @@ func (r *DynamoProfileRepository) GetUserByEmail(ctx context.Context, email stri
 		Username:  item.Username,
 		CreatedAt: item.CreatedAt,
 	}, nil
+}
+
+func (r *DynamoProfileRepository) GetEntitiesByUserAndType(ctx context.Context, userID string, entityType domain.EntityType) ([]interface{}, error) {
+	result, err := r.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(r.tableName),
+		KeyConditionExpression: aws.String("PK = :pk"),
+		FilterExpression:       aws.String("#type = :entity_type"),
+		ExpressionAttributeNames: map[string]string{
+			"#type": "Type",  // 'Type' é palavra reservada no DynamoDB
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":          &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", userID)},
+			":entity_type": &types.AttributeValueMemberS{Value: entityType.String()},
+		},
+	})
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to query entities by type: %w", err)
+	}
+
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+
+	var items []any
+
+	return items, nil
 }
 
 func (r *DynamoProfileRepository) UpdateProfile(ctx context.Context, profile domain.UserProfile) error {

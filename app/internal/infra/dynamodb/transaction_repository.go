@@ -20,6 +20,7 @@ import (
 type transactionItem struct {
 	PK              string `dynamodbav:"PK"`
 	SK              string `dynamodbav:"SK"`
+	Type            string `dynamodbav:"type"`
 	GSI1PK          string `dynamodbav:"GSI1PK"`
 	GSI1SK          string `dynamodbav:"GSI1SK"`
 	ID              string `dynamodbav:"id"`
@@ -56,6 +57,7 @@ func (r *DynamoTransactionRepository) CreateTransaction(ctx context.Context, tra
 	item := transactionItem{
 		PK:              fmt.Sprintf("WALLET#%s", transaction.WalletID),
 		SK:              fmt.Sprintf("TRANSACTION#%s#%s", timestamp, transaction.ID),
+		Type:            "TRANSACTION",
 		GSI1PK:          fmt.Sprintf("USER#%s", ""), // TODO: resolver UserID
 		GSI1SK:          fmt.Sprintf("TRANSACTION#%s#%s", timestamp, transaction.ID),
 		ID:              transaction.ID,
