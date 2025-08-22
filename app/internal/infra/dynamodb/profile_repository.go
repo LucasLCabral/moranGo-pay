@@ -14,14 +14,16 @@ import (
 )
 
 type profileItem struct {
-	PK        string `dynamodbav:"PK"` // USER#<user_id>
-	SK        string `dynamodbav:"SK"` // PROFILE
-	GSI1PK    string `dynamodbav:"GSI1PK"` // EMAIL#<email>
-	GSI1SK    string `dynamodbav:"GSI1SK"` // USER#<user_id>
-	UserID    string `dynamodbav:"user_id"` // <user_id>
-	Email     string `dynamodbav:"email"` // <email>
-	Name      string `dynamodbav:"name"` // <name>
-	Username  string `dynamodbav:"username"` // <username>
+	PK        string `dynamodbav:"PK"`         // USER#<user_id>
+	SK        string `dynamodbav:"SK"`         // PROFILE
+	GSI1PK    string `dynamodbav:"GSI1PK"`     // EMAIL#<email>
+	GSI1SK    string `dynamodbav:"GSI1SK"`     // USER#<user_id>
+	GSI2PK    string `dynamodbav:"GSI2PK"`     // USERNAME#<username>
+	GSI2SK    string `dynamodbav:"GSI2SK"`     // PROFILE
+	UserID    string `dynamodbav:"user_id"`    // <user_id>
+	Email     string `dynamodbav:"email"`      // <email>
+	Name      string `dynamodbav:"name"`       // <name>
+	Username  string `dynamodbav:"username"`   // <username>
 	CreatedAt string `dynamodbav:"created_at"` // <created_at>
 }
 
@@ -50,6 +52,8 @@ func (r *DynamoProfileRepository) CreateProfile(ctx context.Context, profile dom
 		SK:        profile.SK,
 		GSI1PK:    profile.GSI1PK,
 		GSI1SK:    profile.GSI1SK,
+		GSI2PK:    fmt.Sprintf("USERNAME#%s", profile.Username),
+		GSI2SK:    "PROFILE",
 		UserID:    profile.UserID,
 		Email:     profile.Email,
 		Name:      profile.Name,
@@ -102,6 +106,8 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 		SK:        item.SK,
 		GSI1PK:    item.GSI1PK,
 		GSI1SK:    item.GSI1SK,
+		GSI2PK:    item.GSI2PK,
+		GSI2SK:    "PROFILE",
 		UserID:    item.UserID,
 		Email:     item.Email,
 		Name:      item.Name,
@@ -111,11 +117,12 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 }
 
 func (r *DynamoProfileRepository) GetProfileByUsername(ctx context.Context, username string) (*domain.UserProfile, error) {
-	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
-		TableName:        aws.String(r.tableName),
-		FilterExpression: aws.String("username = :username AND SK = :sk"),
+	result, err := r.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(r.tableName),
+		IndexName:              aws.String("GSI2"),
+		KeyConditionExpression: aws.String("GSI2PK = :username AND GSI2SK = :sk"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":username": &types.AttributeValueMemberS{Value: username},
+			":username": &types.AttributeValueMemberS{Value: fmt.Sprintf("USERNAME#%s", username)},
 			":sk":       &types.AttributeValueMemberS{Value: "PROFILE"},
 		},
 		Limit: aws.Int32(1),
@@ -140,6 +147,8 @@ func (r *DynamoProfileRepository) GetProfileByUsername(ctx context.Context, user
 		SK:        item.SK,
 		GSI1PK:    item.GSI1PK,
 		GSI1SK:    item.GSI1SK,
+		GSI2PK:    item.GSI2PK,
+		GSI2SK:    "PROFILE",
 		UserID:    item.UserID,
 		Email:     item.Email,
 		Name:      item.Name,
@@ -178,6 +187,8 @@ func (r *DynamoProfileRepository) GetUserByEmail(ctx context.Context, email stri
 		SK:        item.SK,
 		GSI1PK:    item.GSI1PK,
 		GSI1SK:    item.GSI1SK,
+		GSI2PK:    item.GSI2PK,
+		GSI2SK:    "PROFILE",
 		UserID:    item.UserID,
 		Email:     item.Email,
 		Name:      item.Name,

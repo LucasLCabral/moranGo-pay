@@ -18,6 +18,8 @@ type UserProfile struct {
 	SK        string `json:"sk"`
 	GSI1PK    string `json:"gsi1pk"`
 	GSI1SK    string `json:"gsi1sk"`
+	GSI2PK    string `json:"gsi2pk"`
+	GSI2SK    string `json:"gsi2sk"`
 	UserID    string `json:"user_id"`
 	Email     string `json:"email"`
 	Name      string `json:"name"`
