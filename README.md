@@ -22,6 +22,8 @@ The app uses **AWS Lambda** to handle business logic and **DynamoDB** to store d
 - **DynamoDB** - Database (single table design)
 - **S3** - Terraform state storage
 
+<img src="morango-pay-architecture.png" alt="Morango Pay Architecture" width="100%" />
+
 ## 📡 API Routes
 
 ### Authentication (No JWT Required)
@@ -40,8 +42,7 @@ Create new user account.
 Confirm registration with code from email.
 ```json
 {
-  "username": "user@email.com",
-  "confirmation_code": "123456"
+  "email": "user@email.com"
 }
 ```
 
@@ -49,7 +50,7 @@ Confirm registration with code from email.
 Login and get JWT token.
 ```json
 {
-  "username": "user@email.com",
+  "email": "user@email.com",
   "password": "password123"
 }
 ```
@@ -157,5 +158,5 @@ app/
 
 ---
 
-**Built with Go + AWS Lambda + DynamoDB**
+**Built with Go + AWS Lambda + DynamoDB 🍓**
 
