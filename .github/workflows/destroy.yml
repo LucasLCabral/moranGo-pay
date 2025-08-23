@@ -23,4 +23,3 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
       aws-region: "sa-east-1"
       destroy: true
-      
