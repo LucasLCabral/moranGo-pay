@@ -49,9 +49,10 @@ func init() {
 
 	authUseCase := usecase.NewAuthUseCase(userRepo, profileRepo, walletRepo)
 	walletUseCase := usecase.NewWalletUseCase(walletRepo, transactionRepo)
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, walletRepo)
 
 	authHandler := auth.NewAuthHandler(authUseCase)
-	walletHandler := wallet.NewWalletHandler(walletUseCase)
+	walletHandler := wallet.NewWalletHandler(walletUseCase, transactionUseCase)
 
 	router = delivery.NewRouter(authHandler, walletHandler)
 

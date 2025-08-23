@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
+	"github.com/LucasLCabral/moranGo-pay/internal/dto"
 	"github.com/LucasLCabral/moranGo-pay/internal/usecase"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -30,7 +31,7 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 		}, nil
 	}
 
-	var loginRequest domain.LoginCredentials
+	var loginRequest dto.LoginRequest
 	if err := json.Unmarshal([]byte(request.Body), &loginRequest); err != nil {
 		return events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusBadRequest,
@@ -49,7 +50,8 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 		}, nil
 	}
 
-	response := &domain.LoginResponse{
+	response := &dto.LoginResponse{
+		User:         loginResult.User, // Just passed the user object for helps to get the userID on development test, in prd delete this and use the IDToken
 		AccessToken:  loginResult.AccessToken,
 		RefreshToken: loginResult.RefreshToken,
 		TokenType:    loginResult.TokenType,

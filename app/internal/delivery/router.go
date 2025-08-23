@@ -38,7 +38,7 @@ func (r *Router) Route(ctx context.Context, request events.APIGatewayV2HTTPReque
 	case strings.HasPrefix(path, "/wallet/") && strings.HasSuffix(path, "/deposit") && method == "POST":
 		return r.walletHandler.Deposit(ctx, request)
 	case strings.HasPrefix(path, "/wallet/") && method == "GET":
-		return r.walletHandler.GetWallet(ctx, request)
+		return r.walletHandler.GetWalletByUserID(ctx, request)
 
 	default:
 		return r.handleNotFound()

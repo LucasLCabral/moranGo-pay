@@ -7,22 +7,26 @@ import (
 	"log"
 	"strings"
 
+	"github.com/LucasLCabral/moranGo-pay/internal/domain"
+	"github.com/LucasLCabral/moranGo-pay/internal/dto"
 	"github.com/LucasLCabral/moranGo-pay/internal/usecase"
 	"github.com/aws/aws-lambda-go/events"
 )
 
 type WalletHandler struct {
-	walletUseCase *usecase.WalletUseCase
+	walletUseCase      *usecase.WalletUseCase
+	transactionUseCase *usecase.TransactionUseCase
 }
 
-func NewWalletHandler(walletUseCase *usecase.WalletUseCase) *WalletHandler {
+func NewWalletHandler(walletUseCase *usecase.WalletUseCase, transactionUseCase *usecase.TransactionUseCase) *WalletHandler {
 	return &WalletHandler{
-		walletUseCase: walletUseCase,
+		walletUseCase:      walletUseCase,
+		transactionUseCase: transactionUseCase,
 	}
 }
 
 // GET /wallet/{userID}
-func (h *WalletHandler) GetWallet(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+func (h *WalletHandler) GetWalletByUserID(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	userID := request.PathParameters["userID"]
 	if userID == "" {
 		return events.APIGatewayV2HTTPResponse{
@@ -32,7 +36,7 @@ func (h *WalletHandler) GetWallet(ctx context.Context, request events.APIGateway
 		}, nil
 	}
 
-	wallet, err := h.walletUseCase.GetWallet(ctx, userID)
+	wallet, err := h.walletUseCase.GetWalletByUserID(ctx, userID)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return events.APIGatewayV2HTTPResponse{
@@ -41,7 +45,7 @@ func (h *WalletHandler) GetWallet(ctx context.Context, request events.APIGateway
 				Headers:    map[string]string{"Content-Type": "application/json"},
 			}, nil
 		}
-		
+
 		log.Printf("Error getting wallet: %v", err)
 		return events.APIGatewayV2HTTPResponse{
 			StatusCode: 500,
@@ -92,9 +96,14 @@ func (h *WalletHandler) Deposit(ctx context.Context, request events.APIGatewayV2
 		}, nil
 	}
 
-	err = h.walletUseCase.Deposit(ctx, userID, depositRequest.Amount, depositRequest.Description)
+	err = h.transactionUseCase.ProcessTransaction(ctx, dto.TransactionRequest{
+		UserID:      userID,
+		Amount:      depositRequest.Amount,
+		Type:        domain.TransactionTypeDeposit,
+		Description: depositRequest.Description,
+	})
 	if err != nil {
-		log.Printf("Error making deposit: %v", err)
+		log.Printf("Error processing transaction: %v", err)
 		return events.APIGatewayV2HTTPResponse{
 			StatusCode: 500,
 			Body:       fmt.Sprintf(`{"error": "%s"}`, err.Error()),
@@ -104,7 +113,7 @@ func (h *WalletHandler) Deposit(ctx context.Context, request events.APIGatewayV2
 
 	return events.APIGatewayV2HTTPResponse{
 		StatusCode: 200,
-		Body:       `{"message": "deposit successful"}`,
+		Body:       fmt.Sprintf(`{"message": "%s processed successfully"}`, domain.TransactionTypeDeposit),
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }

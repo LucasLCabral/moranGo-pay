@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
+	"github.com/LucasLCabral/moranGo-pay/internal/dto"
 	"github.com/google/uuid"
 )
 
@@ -113,7 +114,7 @@ func (u *AuthUseCase) ConfirmUser(ctx context.Context, in domain.ConfirmUserInpu
 	return u.userRepo.AdminConfirmUser(ctx, username)
 }
 
-func (u *AuthUseCase) Login(ctx context.Context, c domain.LoginCredentials) (*domain.LoginResult, error) {
+func (u *AuthUseCase) Login(ctx context.Context, c dto.LoginRequest) (*dto.LoginResponse, error) {
 	if err := u.validateLoginCredentials(c); err != nil {
 		return nil, err
 	}
@@ -128,7 +129,7 @@ func (u *AuthUseCase) Login(ctx context.Context, c domain.LoginCredentials) (*do
 		return nil, errors.New("user profile not found")
 	}
 
-	return &domain.LoginResult{
+	return &dto.LoginResponse{
 		User: domain.User{
 			ID:       userProfile.UserID,
 			Email:    userProfile.Email,
@@ -142,7 +143,7 @@ func (u *AuthUseCase) Login(ctx context.Context, c domain.LoginCredentials) (*do
 	}, nil
 }
 
-func (u *AuthUseCase) validateLoginCredentials(credentials domain.LoginCredentials) error {
+func (u *AuthUseCase) validateLoginCredentials(credentials dto.LoginRequest) error {
 	if credentials.Email == "" || credentials.Password == "" {
 		return errors.New("email and password are required")
 	}

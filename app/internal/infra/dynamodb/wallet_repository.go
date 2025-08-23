@@ -143,3 +143,31 @@ func (r *DynamoWalletRepository) DeleteWallet(ctx context.Context, wallet domain
 
 	return nil
 }
+
+func (r *DynamoWalletRepository) GetTransactions(ctx context.Context, userID string) ([]domain.Transaction, error) {
+	return nil, nil
+}
+
+func (r *DynamoWalletRepository) Deposit(ctx context.Context, userID string, amount float64, description string) error {
+	return nil
+}
+
+func (r *DynamoWalletRepository) Withdraw(ctx context.Context, userID string, amount float64, description string) error {
+	return nil	
+}
+
+func (r *DynamoWalletRepository) Transfer(ctx context.Context, userID string, amount float64, description string) error {
+	return nil
+}
+
+func (r *DynamoWalletRepository) Payment(ctx context.Context, userID string, amount float64, description string) error {
+	return nil
+}
+
+func (r *DynamoWalletRepository) Receipt(ctx context.Context, userID string, amount float64, description string) error {
+	return nil
+}
+
+func (r *DynamoWalletRepository) Refund(ctx context.Context, userID string, amount float64, description string) error {
+	return nil
+}

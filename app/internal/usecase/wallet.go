@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
@@ -47,7 +48,7 @@ func (u *WalletUseCase) CreateWallet(ctx context.Context, userID string) (*domai
 	return wallet, nil
 }
 
-func (u *WalletUseCase) GetWallet(ctx context.Context, userID string) (*domain.Wallet, error) {
+func (u *WalletUseCase) GetWalletByUserID(ctx context.Context, userID string) (*domain.Wallet, error) {
 	if userID == "" {
 		return nil, errors.New("userID is required")
 	}
@@ -62,7 +63,7 @@ func (u *WalletUseCase) GetWallet(ctx context.Context, userID string) (*domain.W
 	}
 
 	return wallet, nil
-}	
+}
 
 func (u *WalletUseCase) UpdateWallet(ctx context.Context, wallet domain.Wallet) error {
 	if wallet.WalletID == "" {
@@ -72,36 +73,24 @@ func (u *WalletUseCase) UpdateWallet(ctx context.Context, wallet domain.Wallet) 
 	return u.walletRepo.UpdateWallet(ctx, wallet)
 }
 
-func (u *WalletUseCase) Deposit(ctx context.Context, userID string, amount float64, description string) error {
-	if amount <= 0 {
-		return errors.New("amount must be positive")
+func (u *WalletUseCase) ValidateAndUpdateBalance(ctx context.Context, userID string, amount float64) (*domain.Wallet, error) {
+	wallet, err := u.walletRepo.GetWalletByUserID(ctx, userID)
+	if err != nil || wallet == nil {
+		return nil, errors.New("wallet not found")
 	}
 
-	wallet, err := u.walletRepo.GetWalletByUserID(ctx, userID)
-	if err != nil {
-		return err
+	if amount < 0 && wallet.Balance < math.Abs(amount) {
+		return nil, errors.New("insufficient balance")
 	}
 
 	wallet.Balance += amount
 	wallet.UpdatedAt = time.Now().Format("2006-01-02T15:04:05Z")
 
 	if err := u.walletRepo.UpdateWallet(ctx, *wallet); err != nil {
-		return err
+		return nil, err
 	}
 
-	transaction := &domain.Transaction{
-		ID: uuid.New().String(),
-		WalletID: wallet.WalletID,
-		Amount: amount,
-		TransactionType: domain.TransactionTypeDeposit,
-		Description: description,
-		ReferenceID: uuid.New().String(),
-		CreatedAt: time.Now().Format("2006-01-02T15:04:05Z"),
-	}
-
-	if err := u.transactionRepo.CreateTransaction(ctx, *transaction); err != nil {
-		return err
-	}
-
-	return nil
+	return wallet, nil
 }
+
+
