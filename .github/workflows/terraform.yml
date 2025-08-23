@@ -52,11 +52,7 @@ jobs:
 
       - name: Terraform init
         run: |
-          cd terraform && terraform init \
-          -backend-config="bucket=${{ vars.STATEFILE_BUCKET }}" \
-          -backend-config="key=${{ github.event.repository.name }}" \
-          -backend-config="region=${{ inputs.aws-region }}" \
-          -backend-config="dynamodb_table=${{ vars.DYNAMO_DB_TERRAFORM_LOCK }}"
+          cd terraform && terraform init
 
       - name: Terraform workspace
         run: |
