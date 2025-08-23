@@ -9,7 +9,7 @@ resource "aws_iam_role" "github_actions" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+          Federated = aws_iam_openid_connect_provider.github.arn
         }
         Condition = {
           StringEquals = {
@@ -22,6 +22,8 @@ resource "aws_iam_role" "github_actions" {
       }
     ]
   })
+
+  depends_on = [aws_iam_openid_connect_provider.github]
 }
 
 resource "aws_iam_role_policy" "github_actions" {
@@ -61,6 +63,8 @@ resource "aws_iam_role_policy" "github_actions" {
       }
     ]
   })
+
+  depends_on = [aws_iam_role.github_actions]
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -82,7 +86,6 @@ variable "github_repository" {
   default     = "LucasLCabral/moranGo-pay"
 }
 
-# Output para o ARN da role (útil para configurar no GitHub)
 output "github_actions_role_arn" {
   description = "ARN da role para GitHub Actions"
   value       = aws_iam_role.github_actions.arn
