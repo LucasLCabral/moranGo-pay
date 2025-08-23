@@ -76,3 +76,4 @@ jobs:
             --function-name MoranGo-API \
             --zip-file fileb://app/lambda.zip \
             --region ${{ inputs.aws-region }}
+            
