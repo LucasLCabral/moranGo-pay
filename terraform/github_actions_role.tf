@@ -34,35 +34,30 @@ resource "aws_iam_role_policy" "github_actions" {
       {
         Effect = "Allow"
         Action = [
-          "lambda:UpdateFunctionCode",
-          "lambda:UpdateFunctionConfiguration",
-          "lambda:GetFunction",
-          "lambda:GetFunctionConfiguration"
+          "apigateway:*",
+          "cognito-idp:*",
+          "dynamodb:*",
+          "iam:*",
+          "lambda:*",
+          "ssm:*",
+          "s3:*",
+          "logs:*",
+          "cloudformation:*",
+          "ec2:*",
+          "sts:*"
         ]
-        Resource = aws_lambda_function.api.arn
+        Resource = "*"
       },
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "dynamodb:DescribeTable"
         ]
         Resource = [
           "arn:aws:s3:::morango-pay-terraform-state",
-          "arn:aws:s3:::morango-pay-terraform-state/*"
+          "arn:aws:dynamodb:sa-east-1:*:table/terraform-lock"
         ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:DescribeTable"
-        ]
-        Resource = "arn:aws:dynamodb:sa-east-1:*:table/terraform-lock"
       }
     ]
   })
