@@ -7,10 +7,6 @@ type TransactionRequest struct {
 	Amount      float64                `json:"amount"`
 	Type        domain.TransactionType `json:"type"`
 	Description string                 `json:"description"`
-
-	RecipientID  *string `json:"recipient_id,omitempty"`
-	MerchantID   *string `json:"merchant_id,omitempty"`
-	OriginalTxID *string `json:"original_tx_id,omitempty"`
 }
 
 type TransferRequest struct {

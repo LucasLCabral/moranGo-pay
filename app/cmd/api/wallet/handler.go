@@ -25,6 +25,8 @@ func NewWalletHandler(walletUseCase *usecase.WalletUseCase, transactionUseCase *
 	}
 }
 
+// TODO(refactor): add a middleware for validation of UserID, Request Body, etc..
+
 // GET /wallet/{userID}
 func (h *WalletHandler) GetWalletByUserID(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	userID := request.PathParameters["userID"]
@@ -82,10 +84,7 @@ func (h *WalletHandler) Deposit(ctx context.Context, request events.APIGatewayV2
 		}, nil
 	}
 
-	var depositRequest struct {
-		Amount      float64 `json:"amount"`
-		Description string  `json:"description"`
-	}
+	var depositRequest dto.TransactionRequest
 
 	err := json.Unmarshal([]byte(request.Body), &depositRequest)
 	if err != nil {
@@ -114,6 +113,50 @@ func (h *WalletHandler) Deposit(ctx context.Context, request events.APIGatewayV2
 	return events.APIGatewayV2HTTPResponse{
 		StatusCode: 200,
 		Body:       fmt.Sprintf(`{"message": "%s processed successfully"}`, domain.TransactionTypeDeposit),
+		Headers:    map[string]string{"Content-Type": "application/json"},
+	}, nil
+}
+
+// POST /wallet/{userID}/withdrawal
+func (h *WalletHandler) Withdrawal(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	userID := request.PathParameters["userID"]
+	if userID == "" {
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: 400,
+			Body:       `{"error": "userID is required"}`,
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, nil
+	}
+
+	var withdrawalRequest dto.TransactionRequest
+
+	err := json.Unmarshal([]byte(request.Body), &withdrawalRequest)
+	if err != nil {
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: 400,
+			Body:       `{"error": "invalid request body"}`,
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, nil
+	}
+
+	err = h.transactionUseCase.ProcessTransaction(ctx, dto.TransactionRequest{
+		UserID:      userID,
+		Amount:      withdrawalRequest.Amount,
+		Type:        domain.TransactionTypeWithdrawal,
+		Description: withdrawalRequest.Description,
+	})
+	if err != nil {
+		log.Printf("Error processing transaction: %v", err)
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: 500,
+			Body:       fmt.Sprintf(`{"error": "%s"}`, err.Error()),
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, nil
+	}
+
+	return events.APIGatewayV2HTTPResponse{
+		StatusCode: 200,
+		Body:       fmt.Sprintf(`{"message": "%s processed successfully"}`, domain.TransactionTypeWithdrawal),
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }

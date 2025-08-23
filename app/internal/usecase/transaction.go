@@ -81,6 +81,15 @@ func (u *TransactionUseCase) ProcessTransaction(ctx context.Context, req dto.Tra
 		return errors.New("wallet not found")
 	}
 
+	if req.Type == domain.TransactionTypeWithdrawal ||
+		req.Type == domain.TransactionTypePayment ||
+		req.Type == domain.TransactionTypeTransfer {
+
+		if wallet.Balance < req.Amount {
+			return errors.New("insufficient balance")
+		}
+	}
+
 	finalAmount := u.calculateAmount(req.Amount, req.Type)
 
 	wallet.Balance += finalAmount

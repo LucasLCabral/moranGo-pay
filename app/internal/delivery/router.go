@@ -35,10 +35,12 @@ func (r *Router) Route(ctx context.Context, request events.APIGatewayV2HTTPReque
 		return r.authHandler.ConfirmUser(ctx, request)
 
 	// Wallet Route (protected by JWT)
-	case strings.HasPrefix(path, "/wallet/") && strings.HasSuffix(path, "/deposit") && method == "POST":
-		return r.walletHandler.Deposit(ctx, request)
 	case strings.HasPrefix(path, "/wallet/") && method == "GET":
 		return r.walletHandler.GetWalletByUserID(ctx, request)
+	case strings.HasPrefix(path, "/wallet/") && method == "POST" && strings.HasSuffix(path, "/deposit"):
+		return r.walletHandler.Deposit(ctx, request)
+	case strings.HasPrefix(path, "/wallet/") && method == "POST" && strings.HasSuffix(path, "/withdrawal"):
+		return r.walletHandler.Withdrawal(ctx, request)
 
 	default:
 		return r.handleNotFound()
