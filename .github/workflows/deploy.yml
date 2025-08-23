@@ -53,3 +53,4 @@ jobs:
         aws lambda get-function \
           --function-name MoranGo-API \
           --region ${{ env.AWS_REGION }}
+          
