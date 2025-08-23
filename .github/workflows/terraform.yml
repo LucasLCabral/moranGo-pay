@@ -1,0 +1,82 @@
+name: "Terraform Workflow"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      aws-region:
+        type: string
+        required: true
+      destroy:
+        type: boolean
+        required: false
+        default: false
+      
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go and build Lambda
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build and package Lambda
+        run: |
+          cd app
+          go mod download
+          go build -o bootstrap cmd/api/main.go
+          zip lambda.zip bootstrap
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with: 
+          terraform_version: 1.8.3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with: 
+          role-to-assume: ${{ vars.AWS_ASSUME_ROLE_ARN }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Terraform init
+        run: |
+          cd terraform && terraform init \
+          -backend-config="bucket=${{ vars.STATEFILE_BUCKET }}" \
+          -backend-config="key=${{ github.event.repository.name }}" \
+          -backend-config="region=${{ inputs.aws-region }}" \
+          -backend-config="dynamodb_table=${{ vars.DYNAMO_DB_TERRAFORM_LOCK }}"
+
+      - name: Terraform workspace
+        run: |
+          cd terraform && terraform workspace select ${{ inputs.environment }} || terraform workspace new ${{ inputs.environment }}
+
+      - name: Terraform Plan or Destroy
+        run: |
+          if [ "${{ inputs.destroy }}" = "true" ]; then
+            echo "Destroying resources..."
+            cd terraform && terraform destroy -auto-approve
+          else
+            echo "Planning and applying resources..."
+            cd terraform && terraform plan -out="${{ inputs.environment }}.plan"
+            terraform apply "${{ inputs.environment }}.plan"
+          fi
+
+      - name: Update Lambda Code
+        if: inputs.destroy == false
+        run: |
+          aws lambda update-function-code \
+            --function-name MoranGo-API \
+            --zip-file fileb://app/lambda.zip \
+            --region ${{ inputs.aws-region }}

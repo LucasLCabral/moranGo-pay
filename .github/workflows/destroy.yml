@@ -1,0 +1,25 @@
+name: "DESTROY RESOURCES"
+
+on: 
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    uses: ./.github/workflows/terraform.yml
+    with:
+      environment: ${{ github.event.inputs.environment }}
+      aws-region: "sa-east-1"
+      destroy: true
