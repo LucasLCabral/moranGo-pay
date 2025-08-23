@@ -36,11 +36,17 @@ func (r *Router) Route(ctx context.Context, request events.APIGatewayV2HTTPReque
 
 	// Wallet Route (protected by JWT)
 	case strings.HasPrefix(path, "/wallet/") && method == "GET":
-		return r.walletHandler.GetWalletByUserID(ctx, request)
-	case strings.HasPrefix(path, "/wallet/") && method == "POST" && strings.HasSuffix(path, "/deposit"):
-		return r.walletHandler.Deposit(ctx, request)
-	case strings.HasPrefix(path, "/wallet/") && method == "POST" && strings.HasSuffix(path, "/withdrawal"):
-		return r.walletHandler.Withdrawal(ctx, request)
+		// Verificar se é busca por transação específica ou lista de transações
+		if strings.HasSuffix(path, "/transaction") {
+			return r.walletHandler.GetTransactionByID(ctx, request)
+		} else if strings.HasSuffix(path, "/transactions") {
+			return r.walletHandler.GetTransactionsByUserID(ctx, request)
+		} else {
+			// Busca da wallet por userID
+			return r.walletHandler.GetWalletByUserID(ctx, request)
+		}
+	case strings.HasPrefix(path, "/wallet/") && strings.HasSuffix(path, "/transaction") && method == "POST":
+		return r.walletHandler.ProcessTransaction(ctx, request)
 
 	default:
 		return r.handleNotFound()

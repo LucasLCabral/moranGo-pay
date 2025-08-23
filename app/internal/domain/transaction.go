@@ -5,6 +5,7 @@ import "context"
 type TransactionRepository interface {
 	CreateTransaction(ctx context.Context, transaction Transaction) error
 	GetTransactionByID(ctx context.Context, id string) (*Transaction, error)
+	GetTransactionsByWalletID(ctx context.Context, walletID string, limit int32) ([]Transaction, error)
 	UpdateTransaction(ctx context.Context, transaction Transaction) error
 	DeleteTransaction(ctx context.Context, id string) error
 }

@@ -61,14 +61,34 @@ resource "aws_apigatewayv2_route" "wallet_get_route" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
 }
 
-resource "aws_apigatewayv2_route" "wallet_deposit_route" {
+resource "aws_apigatewayv2_route" "wallet_transaction_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "POST /wallet/{userID}/deposit"
+  route_key = "POST /wallet/{userID}/transaction"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
   
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
 }
+
+resource "aws_apigatewayv2_route" "wallet_transactions_list_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /wallet/{userID}/transactions"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "wallet_transaction_by_id_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /wallet/{transactionID}/transaction"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id

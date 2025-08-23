@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/LucasLCabral/moranGo-pay/internal/domain"
@@ -44,6 +45,27 @@ func (u *TransactionUseCase) GetTransactionByID(ctx context.Context, id string) 
 	}
 
 	return u.transactionRepo.GetTransactionByID(ctx, id)
+}
+
+// GetTransactionsByUserID busca todas as transações de um usuário específico
+func (u *TransactionUseCase) GetTransactionsByUserID(ctx context.Context, userID string, limit int32) ([]domain.Transaction, error) {
+	if userID == "" {
+		return nil, errors.New("userID is required")
+	}
+
+	// Primeiro, buscar a wallet do usuário para obter o walletID
+	wallet, err := u.walletRepo.GetWalletByUserID(ctx, userID)
+	if err != nil || wallet == nil {
+		return nil, errors.New("wallet not found")
+	}
+
+	// Usar o método do repositório para buscar transações por walletID
+	transactions, err := u.transactionRepo.GetTransactionsByWalletID(ctx, wallet.WalletID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transactions: %w", err)
+	}
+
+	return transactions, nil
 }
 func (u *TransactionUseCase) UpdateTransaction(ctx context.Context, transaction domain.Transaction) error {
 	if transaction.ID == "" {

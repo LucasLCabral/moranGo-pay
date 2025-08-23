@@ -16,20 +16,23 @@ import (
 // Single Table Design Keys:
 // Transaction: PK="WALLET#<walletID>", SK="TRANSACTION#<timestamp>#<transactionID>"
 // GSI1: GSI1PK="USER#<userID>", GSI1SK="TRANSACTION#<timestamp>#<transactionID>"
+// GSI2: GSI2PK="TRANSACTION#<transactionID>", GSI2SK="<timestamp>"
 
 type transactionItem struct {
-	PK              string `dynamodbav:"PK"`
-	SK              string `dynamodbav:"SK"`
-	Type            string `dynamodbav:"type"`
-	GSI1PK          string `dynamodbav:"GSI1PK"`
-	GSI1SK          string `dynamodbav:"GSI1SK"`
-	ID              string `dynamodbav:"id"`
-	WalletID        string `dynamodbav:"wallet_id"`
+	PK              string  `dynamodbav:"PK"`
+	SK              string  `dynamodbav:"SK"`
+	Type            string  `dynamodbav:"type"`
+	GSI1PK          string  `dynamodbav:"GSI1PK"`
+	GSI1SK          string  `dynamodbav:"GSI1SK"`
+	GSI2PK          string  `dynamodbav:"GSI2PK"`
+	GSI2SK          string  `dynamodbav:"GSI2SK"`
+	ID              string  `dynamodbav:"id"`
+	WalletID        string  `dynamodbav:"wallet_id"`
 	Amount          float64 `dynamodbav:"amount"`
-	TransactionType string `dynamodbav:"transaction_type"`
-	Description     string `dynamodbav:"description"`
-	ReferenceID     string `dynamodbav:"reference_id"`
-	CreatedAt       string `dynamodbav:"created_at"`
+	TransactionType string  `dynamodbav:"transaction_type"`
+	Description     string  `dynamodbav:"description"`
+	ReferenceID     string  `dynamodbav:"reference_id"`
+	CreatedAt       string  `dynamodbav:"created_at"`
 }
 
 type DynamoTransactionRepository struct {
@@ -53,13 +56,15 @@ func NewDynamoTransactionRepository(tableName string) (domain.TransactionReposit
 
 func (r *DynamoTransactionRepository) CreateTransaction(ctx context.Context, transaction domain.Transaction) error {
 	timestamp := time.Now().Format("2006-01-02T15:04:05Z")
-	
+
 	item := transactionItem{
 		PK:              fmt.Sprintf("WALLET#%s", transaction.WalletID),
 		SK:              fmt.Sprintf("TRANSACTION#%s#%s", timestamp, transaction.ID),
 		Type:            "TRANSACTION",
 		GSI1PK:          fmt.Sprintf("USER#%s", ""), // TODO: resolver UserID
 		GSI1SK:          fmt.Sprintf("TRANSACTION#%s#%s", timestamp, transaction.ID),
+		GSI2PK:          fmt.Sprintf("TRANSACTION#%s", transaction.ID),
+		GSI2SK:          timestamp,
 		ID:              transaction.ID,
 		WalletID:        transaction.WalletID,
 		Amount:          transaction.Amount,
@@ -87,8 +92,41 @@ func (r *DynamoTransactionRepository) CreateTransaction(ctx context.Context, tra
 }
 
 func (r *DynamoTransactionRepository) GetTransactionByID(ctx context.Context, id string) (*domain.Transaction, error) {
-	// TODO: implementar busca por ID (requer GSI ou scan)
-	return nil, fmt.Errorf("get transaction by ID not implemented yet")
+	result, err := r.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(r.tableName),
+		IndexName:              aws.String("GSI2"),
+		KeyConditionExpression: aws.String("GSI2PK = :gsi2pk"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":gsi2pk": &types.AttributeValueMemberS{Value: fmt.Sprintf("TRANSACTION#%s", id)},
+		},
+		Limit: aws.Int32(1),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to query transaction: %w", err)
+	}
+
+	if len(result.Items) == 0 {
+		return nil, fmt.Errorf("transaction not found")
+	}
+
+	var txItem transactionItem
+	err = attributevalue.UnmarshalMap(result.Items[0], &txItem)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal transaction: %w", err)
+	}
+
+	transaction := &domain.Transaction{
+		ID:              txItem.ID,
+		WalletID:        txItem.WalletID,
+		Amount:          txItem.Amount,
+		TransactionType: domain.TransactionType(txItem.TransactionType),
+		Description:     txItem.Description,
+		ReferenceID:     txItem.ReferenceID,
+		CreatedAt:       txItem.CreatedAt,
+	}
+
+	return transaction, nil
 }
 
 func (r *DynamoTransactionRepository) UpdateTransaction(ctx context.Context, transaction domain.Transaction) error {
