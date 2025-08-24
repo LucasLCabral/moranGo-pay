@@ -13,6 +13,6 @@ jobs:
   terraform:
     uses: ./.github/workflows/terraform.yml
     with:
-      environment: prod
+      environment: default
       aws-region: "sa-east-1"
       destroy: false
