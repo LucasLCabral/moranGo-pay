@@ -52,7 +52,7 @@ jobs:
 
       - name: Terraform init with S3 backend
         run: |
-          cd terraform && terraform init
+          cd terraform && terraform init -reconfigure
 
       - name: Terraform workspace
         run: |
