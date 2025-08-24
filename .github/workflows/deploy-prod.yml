@@ -13,6 +13,6 @@ jobs:
   terraform:
     uses: ./.github/workflows/terraform.yml
     with:
-      environment: default
+      environment: default # WATCH OUT! USE THE CORRECT ENVIRONMENT NAME :(
       aws-region: "sa-east-1"
       destroy: false
