@@ -120,7 +120,7 @@ resource "aws_lambda_function" "api" {
   function_name    = "MorangoPay-API"
   role            = aws_iam_role.lambda_role.arn
   handler         = "bootstrap"
-  runtime         = "provided.al2"
+  runtime         = "provided.al2023"
   architectures    = ["x86_64"]
   timeout         = 30
 

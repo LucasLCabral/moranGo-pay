@@ -29,14 +29,43 @@ jobs:
       - name: Setup Go and build Lambda
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24.5'
 
       - name: Build and package Lambda
         run: |
           cd app
           go mod download
-          go build -o bootstrap cmd/api/main.go
-          zip lambda.zip bootstrap
+          go mod tidy
+          echo "🔨 Building Lambda"
+          
+          # Build para Linux (compatível com Lambda)
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+              -ldflags="-s -w -extldflags=-static" \
+              -o bootstrap \
+              cmd/api/main.go
+          
+          if [ $? -eq 0 ]; then
+              echo "✅ Build successful!"
+              
+              # Tornar executável
+              chmod +x bootstrap
+              
+              # Criar ZIP
+              echo "📦 Creating lambda.zip..."
+              zip -j lambda.zip bootstrap
+              
+              if [ $? -eq 0 ]; then
+                  echo "✅ Lambda package created successfully!"
+                  echo "📊 File sizes:"
+                  ls -lh bootstrap lambda.zip
+              else
+                  echo "❌ Failed to create lambda.zip"
+                  exit 1
+              fi
+          else
+              echo "❌ Build failed!"
+              exit 1
+          fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
