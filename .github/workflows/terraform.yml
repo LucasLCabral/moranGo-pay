@@ -76,4 +76,3 @@ jobs:
             --function-name MorangoPay-API \
             --zip-file fileb://app/lambda.zip \
             --region ${{ inputs.aws-region }}
-            
