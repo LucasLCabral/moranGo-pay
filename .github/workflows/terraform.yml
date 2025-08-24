@@ -50,7 +50,7 @@ jobs:
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ inputs.aws-region }}
 
-      - name: Terraform init
+      - name: Terraform init with S3 backend
         run: |
           cd terraform && terraform init
 
@@ -73,7 +73,7 @@ jobs:
         if: inputs.destroy == false
         run: |
           aws lambda update-function-code \
-            --function-name MoranGo-API \
+            --function-name MorangoPay-API \
             --zip-file fileb://app/lambda.zip \
             --region ${{ inputs.aws-region }}
             
