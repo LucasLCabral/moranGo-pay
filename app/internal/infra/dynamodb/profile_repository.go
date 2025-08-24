@@ -1,4 +1,3 @@
-// app/internal/infra/dynamodb/profile_repository.go
 package dynamodb
 
 import (
