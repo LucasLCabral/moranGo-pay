@@ -44,7 +44,7 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 	}
 
 	userID := uuid.New().String()
-	user.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
+	user.CreatedAt = time.Now().Format("2006-01-02 15:04:05") // this is my birth date :D
 	user.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 
 	if err := u.userRepo.CreateUser(ctx, user, password); err != nil {
