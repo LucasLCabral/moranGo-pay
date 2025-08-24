@@ -32,9 +32,10 @@ The app uses **AWS Lambda** to handle business logic and **DynamoDB** to store d
 Create new user account.
 ```json
 {
+  "name": "User Name",
   "username": "user@email.com",
-  "password": "password123",
-  "email": "user@email.com"
+  "email": "user@email.com",
+  "password": "password123"
 }
 ```
 
