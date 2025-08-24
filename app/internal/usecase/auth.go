@@ -43,21 +43,11 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 		return errors.New("username already taken")
 	}
 
-	userID := uuid.New().String()
-	user.CreatedAt = time.Now().Format("2006-01-02 15:04:05") // this is my birth date :D
-	user.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
+	currentTime := time.Now().Format("2006-01-02 15:04:05") // this is my birth date :D
 
-	if err := u.userRepo.CreateUser(ctx, user, password); err != nil {
+	userID, err := u.userRepo.CreateUser(ctx, user, password)
+	if err != nil {
 		return errors.New("failed to create user")
-	}
-
-	user = domain.User{
-		ID:        userID,
-		Email:     user.Email,
-		Name:      user.Name,
-		Username:  user.Username,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
 	}
 
 	profile := domain.UserProfile{
@@ -69,8 +59,8 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 		Email:     user.Email,
 		Name:      user.Name,
 		Username:  user.Username,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
 	}
 
 	if err := u.profileRepo.CreateProfile(ctx, profile); err != nil {
@@ -78,14 +68,12 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 		return errors.New("failed to create user profile")
 	}
 
-	// Removido usernameIndex redundante - username já está no perfil principal
-
 	wallet := domain.Wallet{
 		WalletID:  uuid.New().String(),
 		UserID:    userID,
 		Balance:   0.0,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
 	}
 
 	if err := u.walletRepo.CreateWallet(ctx, wallet); err != nil {

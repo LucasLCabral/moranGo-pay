@@ -23,6 +23,7 @@ func NewWalletUseCase(walletRepo domain.WalletRepository, transactionRepo domain
 	}
 }
 
+
 func (u *WalletUseCase) CreateWallet(ctx context.Context, userID string) (*domain.Wallet, error) {
 	if userID == "" {
 		return nil, errors.New("userID is required")
@@ -33,12 +34,14 @@ func (u *WalletUseCase) CreateWallet(ctx context.Context, userID string) (*domai
 		return existing, nil
 	}
 
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+
 	wallet := &domain.Wallet{
 		WalletID:  uuid.New().String(),
 		UserID:    userID,
 		Balance:   0.0,
-		CreatedAt: time.Now().Format("2006-01-02"),
-		UpdatedAt: time.Now().Format("2006-01-02"),
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
 	}
 
 	if err := u.walletRepo.CreateWallet(ctx, *wallet); err != nil {
@@ -83,8 +86,10 @@ func (u *WalletUseCase) ValidateAndUpdateBalance(ctx context.Context, userID str
 		return nil, errors.New("insufficient balance")
 	}
 
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+
 	wallet.Balance += amount
-	wallet.UpdatedAt = time.Now().Format("2006-01-02T15:04:05Z")
+	wallet.UpdatedAt = currentTime
 
 	if err := u.walletRepo.UpdateWallet(ctx, *wallet); err != nil {
 		return nil, err
@@ -92,5 +97,3 @@ func (u *WalletUseCase) ValidateAndUpdateBalance(ctx context.Context, userID str
 
 	return wallet, nil
 }
-
-

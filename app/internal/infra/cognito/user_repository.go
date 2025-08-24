@@ -32,7 +32,7 @@ func NewCognitoUserRepository(userPoolID, appClientID string) (domain.UserReposi
 	}, nil
 }
 
-func (r *CognitoUserRepository) CreateUser(ctx context.Context, user domain.User, password string) error {
+func (r *CognitoUserRepository) CreateUser(ctx context.Context, user domain.User, password string) (string, error) {
 	signUpInput := &cognitoidentityprovider.SignUpInput{
 		ClientId: aws.String(r.appClientID),
 		Username: aws.String(user.Email),
@@ -44,15 +44,20 @@ func (r *CognitoUserRepository) CreateUser(ctx context.Context, user domain.User
 			{
 				Name: aws.String("name"), Value: aws.String(user.Name),
 			},
+			{
+				Name: aws.String("custom:user_id"), Value: aws.String(user.ID),
+			},
 		},
 	}
 
-	_, err := r.cognitoClient.SignUp(ctx, signUpInput)
+	result, err := r.cognitoClient.SignUp(ctx, signUpInput)
 	if err != nil {
-		return fmt.Errorf("error: failed to sign up user: %w", err)
+		return "", fmt.Errorf("error: failed to sign up user: %w", err)
 	}
 
-	return nil
+	user.ID = *result.UserSub
+
+	return *result.UserSub, nil
 }
 
 func (r *CognitoUserRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {

@@ -29,6 +29,5 @@ type Transaction struct {
 	Amount          float64         `json:"amount"`
 	TransactionType TransactionType `json:"transaction_type"`
 	Description     string          `json:"description,omitempty"`
-	ReferenceID     string          `json:"reference_id,omitempty"`
 	CreatedAt       string          `json:"created_at"`
 }

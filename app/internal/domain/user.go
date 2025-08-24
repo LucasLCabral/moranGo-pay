@@ -10,7 +10,7 @@ import (
 
 // UserRepository is an abstraction that defines the methods for interacting with the user data store
 type UserRepository interface {
-	CreateUser(ctx context.Context, user User, password string) error
+	CreateUser(ctx context.Context, user User, password string) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	ValidateCredentials(ctx context.Context, email string, password string) (bool, error)
 	AdminConfirmUser(ctx context.Context, name string) error

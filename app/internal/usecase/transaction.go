@@ -36,7 +36,12 @@ func (u *TransactionUseCase) CreateTransaction(ctx context.Context, transaction 
 		return errors.New("transaction type is required")
 	}
 
-	return u.transactionRepo.CreateTransaction(ctx, transaction)
+	err := u.transactionRepo.CreateTransaction(ctx, transaction)
+	if err != nil {
+		return errors.New("failed to create transaction")
+	}
+
+	return nil
 }
 
 func (u *TransactionUseCase) GetTransactionByID(ctx context.Context, id string) (*domain.Transaction, error) {
@@ -94,6 +99,8 @@ func (u *TransactionUseCase) calculateAmount(amount float64, txType domain.Trans
 }
 
 func (u *TransactionUseCase) ProcessTransaction(ctx context.Context, req dto.TransactionRequest) error {
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+
 	if err := u.validateTransactionRequest(req); err != nil {
 		return err
 	}
@@ -115,23 +122,27 @@ func (u *TransactionUseCase) ProcessTransaction(ctx context.Context, req dto.Tra
 	finalAmount := u.calculateAmount(req.Amount, req.Type)
 
 	wallet.Balance += finalAmount
-	wallet.UpdatedAt = time.Now().Format("2006-01-02T15:04:05Z")
+	wallet.UpdatedAt = currentTime
 
 	if err := u.walletRepo.UpdateWallet(ctx, *wallet); err != nil {
 		return err
 	}
 
-	transaction := &domain.Transaction{
+	transaction := domain.Transaction{
 		ID:              uuid.New().String(),
 		WalletID:        wallet.WalletID,
 		Amount:          finalAmount,
 		TransactionType: req.Type,
 		Description:     req.Description,
-		ReferenceID:     uuid.New().String(),
-		CreatedAt:       time.Now().Format("2006-01-02T15:04:05Z"),
+		CreatedAt:       currentTime,
 	}
 
-	return u.transactionRepo.CreateTransaction(ctx, *transaction)
+	err = u.transactionRepo.CreateTransaction(ctx, transaction)
+	if err != nil {
+		return errors.New("failed to create transaction")
+	}
+
+	return nil
 }
 
 func (u *TransactionUseCase) validateTransactionRequest(req dto.TransactionRequest) error {

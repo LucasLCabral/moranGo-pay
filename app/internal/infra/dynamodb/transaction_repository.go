@@ -31,13 +31,13 @@ type transactionItem struct {
 	Amount          float64 `dynamodbav:"amount"`
 	TransactionType string  `dynamodbav:"transaction_type"`
 	Description     string  `dynamodbav:"description"`
-	ReferenceID     string  `dynamodbav:"reference_id"`
 	CreatedAt       string  `dynamodbav:"created_at"`
 }
 
 type DynamoTransactionRepository struct {
 	client    *dynamodb.Client
 	tableName string
+	userID    string
 }
 
 func NewDynamoTransactionRepository(tableName string) (domain.TransactionRepository, error) {
@@ -51,6 +51,7 @@ func NewDynamoTransactionRepository(tableName string) (domain.TransactionReposit
 	return &DynamoTransactionRepository{
 		client:    client,
 		tableName: tableName,
+		userID:    "", // Será definido quando necessário
 	}, nil
 }
 
@@ -61,7 +62,7 @@ func (r *DynamoTransactionRepository) CreateTransaction(ctx context.Context, tra
 		PK:              fmt.Sprintf("WALLET#%s", transaction.WalletID),
 		SK:              fmt.Sprintf("TRANSACTION#%s#%s", timestamp, transaction.ID),
 		Type:            "TRANSACTION",
-		GSI1PK:          fmt.Sprintf("USER#%s", ""), // TODO: resolver UserID
+		GSI1PK:          fmt.Sprintf("USER#%s", r.userID),
 		GSI1SK:          fmt.Sprintf("TRANSACTION#%s#%s", timestamp, transaction.ID),
 		GSI2PK:          fmt.Sprintf("TRANSACTION#%s", transaction.ID),
 		GSI2SK:          timestamp,
@@ -70,7 +71,6 @@ func (r *DynamoTransactionRepository) CreateTransaction(ctx context.Context, tra
 		Amount:          transaction.Amount,
 		TransactionType: string(transaction.TransactionType),
 		Description:     transaction.Description,
-		ReferenceID:     transaction.ReferenceID,
 		CreatedAt:       transaction.CreatedAt,
 	}
 
@@ -122,7 +122,6 @@ func (r *DynamoTransactionRepository) GetTransactionByID(ctx context.Context, id
 		Amount:          txItem.Amount,
 		TransactionType: domain.TransactionType(txItem.TransactionType),
 		Description:     txItem.Description,
-		ReferenceID:     txItem.ReferenceID,
 		CreatedAt:       txItem.CreatedAt,
 	}
 
@@ -170,7 +169,6 @@ func (r *DynamoTransactionRepository) GetTransactionsByWalletID(ctx context.Cont
 			Amount:          txItem.Amount,
 			TransactionType: domain.TransactionType(txItem.TransactionType),
 			Description:     txItem.Description,
-			ReferenceID:     txItem.ReferenceID,
 			CreatedAt:       txItem.CreatedAt,
 		})
 	}
