@@ -26,6 +26,7 @@ type profileItem struct {
 	Name      string `dynamodbav:"name"`       // <name>
 	Username  string `dynamodbav:"username"`   // <username>
 	CreatedAt string `dynamodbav:"created_at"` // <created_at>
+	UpdatedAt string `dynamodbav:"updated_at"` // <updated_at>
 }
 
 type DynamoProfileRepository struct {
@@ -61,6 +62,7 @@ func (r *DynamoProfileRepository) CreateProfile(ctx context.Context, profile dom
 		Name:      profile.Name,
 		Username:  profile.Username,
 		CreatedAt: profile.CreatedAt,
+		UpdatedAt: profile.UpdatedAt,
 	}
 
 	av, err := attributevalue.MarshalMap(item)
@@ -103,6 +105,11 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 		return nil, fmt.Errorf("failed to unmarshal profile: %w", err)
 	}
 
+	// Garantir que campos vazios tenham valores padrão
+	if item.UpdatedAt == "" {
+		item.UpdatedAt = item.CreatedAt
+	}
+
 	return &domain.UserProfile{
 		PK:        item.PK,
 		SK:        item.SK,
@@ -116,6 +123,7 @@ func (r *DynamoProfileRepository) GetProfileByUserID(ctx context.Context, userID
 		Name:      item.Name,
 		Username:  item.Username,
 		CreatedAt: item.CreatedAt,
+		UpdatedAt: item.UpdatedAt,
 	}, nil
 }
 
@@ -145,6 +153,11 @@ func (r *DynamoProfileRepository) GetProfileByUsername(ctx context.Context, user
 		return nil, fmt.Errorf("failed to unmarshal profile: %w", err)
 	}
 
+	// Garantir que campos vazios tenham valores padrão
+	if item.UpdatedAt == "" {
+		item.UpdatedAt = item.CreatedAt
+	}
+
 	return &domain.UserProfile{
 		PK:        item.PK,
 		SK:        item.SK,
@@ -157,6 +170,7 @@ func (r *DynamoProfileRepository) GetProfileByUsername(ctx context.Context, user
 		Name:      item.Name,
 		Username:  item.Username,
 		CreatedAt: item.CreatedAt,
+		UpdatedAt: item.UpdatedAt,
 	}, nil
 }
 
@@ -179,10 +193,21 @@ func (r *DynamoProfileRepository) GetUserByEmail(ctx context.Context, email stri
 		return nil, nil
 	}
 
+	// Debug: verificar o que está sendo retornado
+	fmt.Printf("🔍 Debug DynamoDB - Item retornado: %+v\n", result.Items[0])
+
 	var item profileItem
 	err = attributevalue.UnmarshalMap(result.Items[0], &item)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal profile: %w", err)
+	}
+
+	// Debug: verificar o que foi deserializado
+	fmt.Printf("🔍 Debug DynamoDB - Item deserializado: %+v\n", item)
+
+	// Garantir que campos vazios tenham valores padrão
+	if item.UpdatedAt == "" {
+		item.UpdatedAt = item.CreatedAt // Se UpdatedAt estiver vazio, usar CreatedAt
 	}
 
 	return &domain.UserProfile{
@@ -198,6 +223,7 @@ func (r *DynamoProfileRepository) GetUserByEmail(ctx context.Context, email stri
 		Name:      item.Name,
 		Username:  item.Username,
 		CreatedAt: item.CreatedAt,
+		UpdatedAt: item.UpdatedAt,
 	}, nil
 }
 
@@ -207,14 +233,14 @@ func (r *DynamoProfileRepository) GetEntitiesByUserAndType(ctx context.Context, 
 		KeyConditionExpression: aws.String("PK = :pk"),
 		FilterExpression:       aws.String("#type = :entity_type"),
 		ExpressionAttributeNames: map[string]string{
-			"#type": "Type",  // 'Type' é palavra reservada no DynamoDB
+			"#type": "Type", // 'Type' é palavra reservada no DynamoDB
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":          &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", userID)},
 			":entity_type": &types.AttributeValueMemberS{Value: entityType.String()},
 		},
 	})
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to query entities by type: %w", err)
 	}

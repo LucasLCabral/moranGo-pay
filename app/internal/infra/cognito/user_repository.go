@@ -86,8 +86,8 @@ func (r *CognitoUserRepository) GetUserByEmail(ctx context.Context, email string
 		ID:        aws.ToString(u.Username),
 		Email:     emailAttr,
 		Name:      nameAttr,
-		CreatedAt: u.UserCreateDate.Format("2006-01-02"),
-		UpdatedAt: u.UserLastModifiedDate.Format("2006-01-02"),
+		CreatedAt: u.UserCreateDate.Format("2006-01-02 15:04:05"),
+		UpdatedAt: u.UserLastModifiedDate.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 

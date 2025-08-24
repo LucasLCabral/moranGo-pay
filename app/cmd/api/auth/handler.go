@@ -51,7 +51,7 @@ func (handler *AuthHandler) Login(ctx context.Context, request events.APIGateway
 	}
 
 	response := &dto.LoginResponse{
-		User:         loginResult.User, // Just passed the user object for helps to get the userID on development test, in prd delete this and use the IDToken
+		User:         loginResult.User, // passed the user object to help to get the userID on development test, in prd delete this and use the IDToken
 		AccessToken:  loginResult.AccessToken,
 		RefreshToken: loginResult.RefreshToken,
 		TokenType:    loginResult.TokenType,

@@ -44,8 +44,8 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 	}
 
 	userID := uuid.New().String()
-	user.CreatedAt = time.Now().Format("2006-01-02") // do you believe that this format is my birth date? :)
-	user.UpdatedAt = time.Now().Format("2006-01-02") // yk, that's crazy, but it's the only way to get the date in the correct format
+	user.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
+	user.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 
 	if err := u.userRepo.CreateUser(ctx, user, password); err != nil {
 		return errors.New("failed to create user")
@@ -70,6 +70,7 @@ func (u *AuthUseCase) Register(ctx context.Context, user domain.User, password s
 		Name:      user.Name,
 		Username:  user.Username,
 		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 
 	if err := u.profileRepo.CreateProfile(ctx, profile); err != nil {
@@ -124,6 +125,7 @@ func (u *AuthUseCase) Login(ctx context.Context, c dto.LoginRequest) (*dto.Login
 		return nil, errors.New("invalid credentials")
 	}
 
+	// Buscar perfil completo do DynamoDB (incluindo timestamps)
 	userProfile, err := u.profileRepo.GetUserByEmail(ctx, c.Email)
 	if err != nil || userProfile == nil {
 		return nil, errors.New("user profile not found")
@@ -131,10 +133,12 @@ func (u *AuthUseCase) Login(ctx context.Context, c dto.LoginRequest) (*dto.Login
 
 	return &dto.LoginResponse{
 		User: domain.User{
-			ID:       userProfile.UserID,
-			Email:    userProfile.Email,
-			Name:     userProfile.Name,
-			Username: userProfile.Username,
+			ID:        userProfile.UserID,
+			Email:     userProfile.Email,
+			Name:      userProfile.Name,
+			Username:  userProfile.Username,
+			CreatedAt: userProfile.CreatedAt,
+			UpdatedAt: userProfile.UpdatedAt,
 		},
 		AccessToken:  tok.AccessToken,
 		RefreshToken: tok.RefreshToken,
