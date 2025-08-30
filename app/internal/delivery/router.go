@@ -51,7 +51,6 @@ func (r *Router) Route(ctx context.Context, request events.APIGatewayV2HTTPReque
 	default:
 		return r.handleNotFound()
 	}
-
 }
 
 func (r *Router) handleNotFound() (events.APIGatewayV2HTTPResponse, error) {
